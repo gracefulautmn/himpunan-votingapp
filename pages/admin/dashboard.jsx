@@ -1,13 +1,15 @@
-// pages/admin/results.jsx
+// pages/admin/dashboard.jsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { supabase } from '../../utils/supabaseClient';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { UserCircle, LogOut, Users, BarChart2, ArrowLeft, DownloadCloud } from 'lucide-react';
+import { UserCircle, LogOut, Users, BarChart2, FileText, Download } from 'lucide-react';
+import Loading from '../../components/Loading';
+import AdminLayout from '../../components/Layout/AdminLayout';
 
-function AdminResults() {
+function AdminDashboard() {
   const [results, setResults] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -29,14 +31,14 @@ function AdminResults() {
   const fetchResults = async () => {
     setLoading(true);
     try {
-      // Pertama, ambil semua kandidat
+      // First, get all candidates
       const { data: candidates, error: candidatesError } = await supabase
         .from('candidates')
         .select('id, ketua, wakil, kabinet');
   
       if (candidatesError) throw candidatesError;
   
-      // Kemudian hitung votes untuk setiap kandidat
+      // Then calculate votes for each candidate
       const resultsWithVotes = await Promise.all(
         candidates.map(async (candidate) => {
           const { count, error: votesError } = await supabase
@@ -53,10 +55,10 @@ function AdminResults() {
         })
       );
   
-      // Hitung total votes
+      // Calculate total votes
       const total = resultsWithVotes.reduce((sum, item) => sum + item.votes, 0);
       
-      // Format data untuk chart
+      // Format data for chart
       const formattedResults = resultsWithVotes.map(item => ({
         name: `${item.ketua} - ${item.wakil}`,
         votes: item.votes,
@@ -87,225 +89,145 @@ function AdminResults() {
     };
   };
 
-  const handleExportResults = () => {
-    // Create CSV content
-    const headers = ['No', 'Kandidat', 'Jumlah Suara', 'Persentase'];
-    const rows = results.map((result, index) => [
-      index + 1,
-      `${result.ketua} - ${result.wakil}`,
-      result.votes,
-      `${result.percentage}%`
-    ]);
-    
-    // Add total row
-    rows.push(['', 'Total', totalVotes, '100%']);
-    
-    // Convert to CSV
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-    
-    // Create download link
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `hasil-voting-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('isAdmin');
-    router.push('/admin/login');
-  };
-
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-4 border border-gray-200 rounded shadow-md">
-          <p className="font-bold">{payload[0].payload.name}</p>
-          <p className="text-blue-600">{`Jumlah Suara: ${payload[0].value}`}</p>
-          <p className="text-green-600">{`Persentase: ${payload[0].payload.percentage}%`}</p>
+        <div className="bg-white p-4 border border-slate-200 rounded shadow-md">
+          <p className="font-bold text-slate-800">{payload[0].payload.name}</p>
+          <p className="text-slate-600">Kabinet: {payload[0].payload.kabinet}</p>
+          <p className="text-blue-600 font-medium">{`Jumlah Suara: ${payload[0].value}`}</p>
+          <p className="text-emerald-600 font-medium">{`Persentase: ${payload[0].payload.percentage}%`}</p>
         </div>
       );
     }
     return null;
   };
 
+  if (loading) return <Loading />;
+
   return (
-    <>
-      <Head>
-        <title>Hasil Voting | Admin</title>
-        <meta name="description" content="Hasil Voting dalam Sistem Pemilihan" />
-      </Head>
-
-      <div className="flex min-h-screen bg-gray-100">
-        {/* Sidebar */}
-        <div className="w-64 bg-blue-800 text-white">
-          <div className="p-4">
-            <h2 className="text-2xl font-bold text-center">Admin Panel</h2>
-            <div className="flex justify-center mt-4">
-              <UserCircle size={64} />
-            </div>
-            {/* <p className="mt-2 text-center">Selamat datang, Admin!</p> */}
-          </div>
-          
-          <nav className="mt-8">
-            <Link href="/admin/dashboard" className="flex items-center px-4 py-3 bg-blue-900 hover:bg-blue-900 transition-colors">
-              <div className="flex items-center space-x-2">
-                <BarChart2 size={20} />
-                <span>Dashboard</span>
-              </div>
-            </Link>
-            <Link href="/admin/candidates" className="flex items-center px-4 py-3 hover:bg-blue-900 transition-colors">
-              <div className="flex items-center space-x-2">
-                <Users size={20} />
-                <span>Kelola Kandidat</span>
-              </div>
-            </Link>
-            <Link href="/admin/programs" className="flex items-center px-4 py-3 bg-blue-800 hover:bg-blue-  900">
-                          <div className="flex items-center space-x-2">
-                            <Users size={20} />
-                            <span>Kelola Program Studi</span>
-                          </div>
-                        </Link>
-            {/* <Link href="/admin/results" className="flex items-center px-4 py-3 bg-blue-900">
-              <div className="flex items-center space-x-2">
-                <BarChart2 size={20} />
-                <span>Hasil Voting</span>
-              </div>
-            </Link> */}
-          </nav>
-          
-          <div className="absolute bottom-4 w-64 px-4">
-            <button 
-              onClick={handleLogout}
-              className="flex items-center justify-center w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-            >
-              <LogOut size={16} className="mr-2" />
-              <span>Logout</span>
-            </button>
+    <AdminLayout title="Dashboard" activeMenu="dashboard">
+      <div className="p-6 bg-white rounded-lg shadow-md mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+            <p className="text-slate-500 mt-1">Monitor voting results in real-time</p>
           </div>
         </div>
-        
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold">Dashboard</h1>
-              <div className="flex space-x-4">
-                {/* <button
-                  onClick={handleExportResults}
-                  className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
-                >
-                  <DownloadCloud size={16} className="mr-2" />
-                  Export CSV
-                </button> */}
-                {/* <Link 
-                  href="/admin/dashboard" 
-                  className="flex items-center text-blue-600 hover:text-blue-800"
-                >
-                  <ArrowLeft size={16} className="mr-1" />
-                  <span>Kembali ke Dashboard</span>
-                </Link> */}
+
+        {results.length === 0 ? (
+          <div className="text-center py-12 bg-slate-50 rounded-lg">
+            <FileText size={48} className="mx-auto text-slate-400 mb-4" />
+            <p className="text-slate-500 text-lg">No voting data available yet.</p>
+            <p className="text-slate-400">Results will appear here as votes come in.</p>
+          </div>
+        ) : (
+          <div>
+            <div className="bg-blue-50 p-5 rounded-lg mb-6">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+                <div>
+                  <h2 className="text-lg font-semibold text-blue-800 mb-1">Total Votes: {totalVotes}</h2>
+                  <p className="text-slate-600">Data updates in real-time</p>
+                </div>
+                <div className="mt-4 md:mt-0 bg-white px-4 py-3 rounded-md shadow-sm">
+                  <p className="text-slate-700 font-medium">Last update: {new Date().toLocaleTimeString()}</p>
+                </div>
               </div>
             </div>
 
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : results.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">Belum ada data voting yang tersedia.</p>
-              </div>
-            ) : (
-              <div>
-                <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                  <h2 className="text-lg font-semibold text-blue-800 mb-2">Total Suara: {totalVotes}</h2>
-                  <p className="text-gray-600">Data diperbarui secara real-time</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  {results.map((result, index) => (
-                    <div key={index} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                      <h3 className="font-bold text-lg">{result.kabinet}</h3>
-                      <h3 className="font-bold text-lg">{result.ketua} - {result.wakil}</h3>
-                      <div className="flex items-center mt-2">
-                        <div className="w-full bg-gray-200 rounded-full h-4">
-                          <div 
-                            className="bg-blue-600 h-4 rounded-full" 
-                            style={{ width: `${result.percentage}%` }}
-                          ></div>
-                        </div>
-                        <span className="ml-2 font-medium">{result.percentage}%</span>
-                      </div>
-                      <p className="mt-2 text-gray-600">Jumlah Suara: {result.votes}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={results}
-                      margin={{ top: 20, right: 20, left: 20, bottom: 60 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ angle: -45, textAnchor: 'end', fontSize: 12 }}
-                        height={60}
-                      />
-                      <YAxis />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      <Bar dataKey="votes" name="Jumlah Suara" fill="#3b82f6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold mb-4">Detail Hasil Voting</h2>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="py-3 px-4 text-left border-b">No.</th>
-                          <th className="py-3 px-4 text-left border-b">Pasangan Kandidat</th>
-                          <th className="py-3 px-4 text-center border-b">Jumlah Suara</th>
-                          <th className="py-3 px-4 text-center border-b">Persentase</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {results.map((result, index) => (
-                          <tr key={index} className="hover:bg-gray-50">
-                            <td className="py-3 px-4 border-b">{index + 1}</td>
-                            <td className="py-3 px-4 font-medium border-b">{result.name}</td>
-                            <td className="py-3 px-4 text-center border-b">{result.votes}</td>
-                            <td className="py-3 px-4 text-center border-b">{result.percentage}%</td>
-                          </tr>
-                        ))}
-                        <tr className="bg-gray-50 font-semibold">
-                          <td className="py-3 px-4" colSpan="2">Total</td>
-                          <td className="py-3 px-4 text-center">{totalVotes}</td>
-                          <td className="py-3 px-4 text-center">100%</td>
-                        </tr>
-                      </tbody>
-                    </table>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {results.map((result, index) => (
+                <div key={index} className="bg-white border border-slate-200 rounded-lg shadow-sm p-5 transition-all hover:shadow-md">
+                  <div className="mb-2">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      index === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {index === 0 ? 'Leading' : `Rank ${index + 1}`}
+                    </span>
                   </div>
+                  <h3 className="font-bold text-slate-800 text-lg">{result.kabinet}</h3>
+                  <p className="text-slate-600 mb-3">{result.name}</p>
+                  <div className="flex items-center mb-2">
+                    <div className="w-full bg-slate-200 rounded-full h-4 mr-2">
+                      <div 
+                        className={`h-4 rounded-full ${
+                          index === 0 ? 'bg-emerald-500' : 'bg-blue-500'
+                        }`} 
+                        style={{ width: `${result.percentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="font-medium text-slate-700 whitespace-nowrap">{result.percentage}%</span>
+                  </div>
+                  <p className="mt-2 text-slate-600">Votes: <span className="font-semibold">{result.votes}</span></p>
                 </div>
+              ))}
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-5 mb-8 h-96">
+              <h3 className="font-bold text-slate-800 text-lg mb-4">Vote Distribution</h3>
+              <ResponsiveContainer width="100%" height="90%">
+                <BarChart
+                  data={results}
+                  margin={{ top: 20, right: 20, left: 20, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ angle: -45, textAnchor: 'end', fontSize: 12, fill: '#64748b' }}
+                    height={60}
+                    stroke="#cbd5e1"
+                  />
+                  <YAxis stroke="#cbd5e1" />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+                  <Bar dataKey="votes" name="Votes" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold text-slate-800 mb-4">Detailed Results</h2>
+              <div className="overflow-x-auto bg-white border border-slate-200 rounded-lg">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead>
+                    <tr className="bg-slate-50">
+                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Rank</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cabinet</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Candidate Pair</th>
+                      <th className="px-6 py-4 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Votes</th>
+                      <th className="px-6 py-4 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Percentage</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {results.map((result, index) => (
+                      <tr key={index} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">{index + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{result.kabinet}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">{result.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 text-center">{result.votes}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 text-center">
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            index === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {result.percentage}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-50 font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800" colSpan="3">Total</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 text-center">{totalVotes}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 text-center">100%</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
-    </>
+    </AdminLayout>
   );
 }
 
-export default AdminResults;
+export default AdminDashboard;

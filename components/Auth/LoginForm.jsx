@@ -40,46 +40,54 @@ function LoginForm() {
     setLoading(true);
     setAlert({ show: false, message: '', type: 'success' });
 
-    const { nim, email } = data;
-    const programCode = nim.substring(0, 4);
+    try {
+      const { nim, email } = data;
+      const programCode = nim.substring(0, 4);
 
-    localStorage.setItem('user_email', email);
+      localStorage.setItem('user_email', email);
 
-    const { data: allowedPrograms, error: allowedProgramsError } = await supabase
-      .from('allowed_programs')
-      .select('program_code')
-      .eq('program_code', programCode);
+      const { data: allowedPrograms, error: allowedProgramsError } = await supabase
+        .from('allowed_programs')
+        .select('program_code')
+        .eq('program_code', programCode);
 
-    if (allowedProgramsError) {
-      console.error("Error fetching allowed programs:", allowedProgramsError);
-      setAlert({ show: true, message: 'Terjadi kesalahan saat memeriksa program studi.', type: 'error' });
+      if (allowedProgramsError) throw allowedProgramsError;
+
+      if (!allowedPrograms || allowedPrograms.length === 0) {
+        throw new Error('Program studi Anda tidak diizinkan untuk voting.');
+      }
+
+      const { error } = await supabase.auth.signInWithOtp({ email });
+
+      if (error) throw error;
+
+      setAlert({ 
+        show: true, 
+        message: 'Kode verifikasi telah dikirim ke email Anda.', 
+        type: 'success' 
+      });
+      
+      // Redirect after showing success message
+      setTimeout(() => router.push('/verify'), 1500);
+    } catch (error) {
+      console.error("Error:", error);
+      setAlert({ 
+        show: true, 
+        message: error.message || 'Terjadi kesalahan saat memproses permintaan.', 
+        type: 'error' 
+      });
       setLoading(false);
-      return;
     }
-
-    if (!allowedPrograms || allowedPrograms.length === 0) {
-      setAlert({ show: true, message: 'Program studi Anda tidak diizinkan untuk voting.', type: 'error' });
-      setLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.auth.signInWithOtp({ email });
-
-    if (error) {
-      console.error("Error sending verification code:", error);
-      setAlert({ show: true, message: 'Gagal mengirim kode verifikasi. Periksa email Anda.', type: 'error' });
-    } else {
-      setAlert({ show: true, message: 'Kode verifikasi telah dikirim ke email Anda.', type: 'success' });
-      router.push('/verify');
-    }
-
-    setLoading(false);
   };
 
   return (
-    <div className="mt-2">
+    <div className="mt-2 relative">
+      {loading && (
+        <div className="absolute inset-0 bg-white bg-opacity-50 z-10"></div>
+      )}
+      
       {alert.show && <Alert message={alert.message} type={alert.type} />}
-      {loading && <Loading />} {/* Tampilkan komponen Loading saat loading true */}
+      
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="relative">
           <label htmlFor="nim" className="block text-sm font-medium text-gray-700 mb-1">
@@ -94,7 +102,7 @@ function LoginForm() {
               id="nim"
               {...register("nim")}
               disabled={loading}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+              className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 ${loading ? 'bg-gray-100' : ''}`}
               placeholder="Masukkan NIM"
             />
           </div>
@@ -114,7 +122,7 @@ function LoginForm() {
               id="email"
               {...register("email")}
               disabled={loading}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+              className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 ${loading ? 'bg-gray-100' : ''}`}
               placeholder="nim@student.universitaspertamina.ac.id"
             />
           </div>
@@ -125,9 +133,18 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-75 transition-colors duration-200 relative"
           >
-            Login
+            {loading ? (
+              <>
+                <span className="opacity-0">Login</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              </>
+            ) : (
+              'Login'
+            )}
           </button>
         </div>
       </form>

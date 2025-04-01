@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../utils/supabaseClient';
 import Alert from '../Alert';
-import Loading from '../Loading';
 import { MailIcon, KeyIcon } from 'lucide-react';
 
 function VerificationForm() {
@@ -12,13 +11,12 @@ function VerificationForm() {
   const [alert, setAlert] = useState({ show: false, message: '', type: 'success' });
   const router = useRouter();
 
-  // Ambil email dari localStorage saat komponen dimuat
   useEffect(() => {
     const savedEmail = localStorage.getItem('user_email');
     if (savedEmail) {
       setEmail(savedEmail);
     } else {
-      router.push('/login'); // Redirect ke login jika tidak ada email
+      router.push('/login');
     }
   }, [router]);
 
@@ -26,26 +24,39 @@ function VerificationForm() {
     setLoading(true);
     setAlert({ show: false, message: '', type: 'success' });
 
-    const { error } = await supabase.auth.verifyOtp({
-      email,  // Gunakan email yang disimpan
-      token,
-      type: 'email'
-    });
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email'
+      });
 
-    if (error) {
+      if (error) throw error;
+
+      setAlert({ 
+        show: true, 
+        message: 'Verifikasi berhasil! Mengarahkan ke halaman voting...', 
+        type: 'success' 
+      });
+      
+      // Redirect after showing success message
+      setTimeout(() => router.push('/vote'), 1500);
+    } catch (error) {
       console.error("Error verifying token:", error);
-      setAlert({ show: true, message: 'Kode verifikasi tidak valid.', type: 'error' });
-    } else {
-      setAlert({ show: true, message: 'Verifikasi berhasil!', type: 'success' });
-      router.push('/vote');
+      setAlert({ 
+        show: true, 
+        message: 'Kode verifikasi tidak valid.', 
+        type: 'error' 
+      });
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="mt-2">
-      {loading && <Loading />} {/* Menggunakan komponen Loading yang terpisah */}
+    <div className="mt-2 relative">
+      {loading && (
+        <div className="absolute inset-0 bg-white bg-opacity-50 z-10"></div>
+      )}
       
       {alert.show && <Alert message={alert.message} type={alert.type} />}
       
@@ -88,7 +99,7 @@ function VerificationForm() {
               value={token}
               onChange={(e) => setToken(e.target.value)}
               disabled={loading}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+              className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 ${loading ? 'bg-gray-100' : ''}`}
               placeholder="Masukkan kode verifikasi"
             />
           </div>
@@ -101,15 +112,14 @@ function VerificationForm() {
           <button
             onClick={handleVerify}
             disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-75 transition-colors duration-200 relative"
           >
             {loading ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Verifikasi...
+                <span className="opacity-0">Verifikasi</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
               </>
             ) : (
               'Verifikasi'

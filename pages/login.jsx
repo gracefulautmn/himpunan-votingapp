@@ -10,11 +10,12 @@ function LoginPage() {
         <div className="border-l border-gray-800 mx-4 h-10"></div> {/* Garis vertikal */}
         <Image src="/logo2.png" alt="Logo 2" width={40} height={60} className="rounded-md" />
       </div>
+
       <div className="max-w-md w-full bg-white rounded-xl shadow-2xl overflow-hidden">
         <div className="px-6 py-8">
           <div className="text-center">
             <Image 
-              src="/logo.png" 
+              src="/hmik.jpeg" 
               alt="Universitas Pertamina Logo" 
               width={120} 
               height={120}
