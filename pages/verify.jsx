@@ -1,9 +1,16 @@
 import VerificationForm from '../components/Auth/VerificationForm';
 import Image from 'next/image';
+import Head from 'next/head';
 
 function VerificationPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-purple-600 py-12 px-4 sm:px-6 lg:px-8 relative">
+    <>
+            <Head>
+                <title>Sistem Voting - Universitas Pertamina</title>
+                <meta name="description" content="Sistem voting online Universitas Pertamina" />
+            </Head>
+    
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-blue-300 py-12 px-4 sm:px-6 lg:px-8 relative">
       {/* Dua logo di kiri atas */}
       <div className="absolute top-4 left-4 flex items-center">
               <Image src="/logo.png" alt="Logo 1" width={60} height={60} className="rounded-md" />
@@ -27,6 +34,7 @@ function VerificationPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

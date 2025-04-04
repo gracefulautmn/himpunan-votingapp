@@ -292,8 +292,8 @@ function AdminCandidates() {
                   <tr>
                     <th className="py-3 px-4 text-left">No.</th>
                     <th className="py-3 px-4 text-left">Foto</th>
-                    <th className="py-3 px-4 text-left">Nama Ketua</th>
-                    <th className="py-3 px-4 text-left">Nama Wakil</th>
+                    <th className="py-3 px-4 text-left">Kabinet</th>
+                    <th className="py-3 px-4 text-left">Ketua-Wakil</th>
                     <th className="py-3 px-4 text-left">Visi</th>
                     <th className="py-3 px-4 text-left">Misi</th>
                     <th className="py-3 px-4 text-center">Aksi</th>
@@ -316,8 +316,8 @@ function AdminCandidates() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 font-medium">{candidate.ketua}</td>
-                      <td className="py-3 px-4">{candidate.wakil}</td>
+                      <td className="py-3 px-4 font-medium">{candidate.kabinet}</td>
+                      <td className="py-3 px-4">{candidate.ketua}-{candidate.wakil}</td>
                       <td className="py-3 px-4 max-w-xs truncate">{candidate.visi}</td>
                       <td className="py-3 px-4 max-w-xs truncate">{candidate.misi}</td>
                       <td className="py-3 px-4 text-center">

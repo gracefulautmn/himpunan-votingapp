@@ -1,8 +1,14 @@
 import LoginForm from '../components/Auth/LoginForm';
 import Image from 'next/image';
+import Head from 'next/head';
 
 function LoginPage() {
   return (
+    <>
+        <Head>
+            <title>Sistem Voting - Universitas Pertamina</title>
+            <meta name="description" content="Sistem voting online Universitas Pertamina" />
+        </Head>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-blue-300 py-12 px-4 sm:px-6 lg:px-8 relative">
       {/* Dua logo di kiri atas */}
       <div className="absolute top-4 left-4 flex items-center">
@@ -27,6 +33,7 @@ function LoginPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

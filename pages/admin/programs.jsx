@@ -10,6 +10,7 @@ import Loading from '../../components/Loading';
 function AdminPrograms() {
   const [programs, setPrograms] = useState([]);
   const [newProgramCode, setNewProgramCode] = useState('');
+  const [newProgramName, setNewProgramName] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: '', type: 'success' });
@@ -50,8 +51,11 @@ function AdminPrograms() {
     try {
       setSubmitting(true);
       const { error } = await supabase
-        .from('allowed_programs')
-        .insert([{ program_code: newProgramCode }]);
+         .from('allowed_programs')
+         .insert([{ 
+          program_code: newProgramCode,
+          program_name: newProgramName
+         }]);
 
       if (error) throw error;
       
@@ -139,6 +143,20 @@ function AdminPrograms() {
                 maxLength={4}
               />
             </div>
+            <div className="flex-1">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="programName">
+                Nama Program Studi
+                </label>
+                <input
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="programName"
+                type="text"
+                placeholder="Contoh: Teknik Informatika"
+                value={newProgramName}
+                onChange={(e) => setNewProgramName(e.target.value)}
+                />
+                </div>
+
             <button
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center"
               onClick={handleAddProgram}
@@ -168,6 +186,7 @@ function AdminPrograms() {
                   <tr>
                     <th className="py-3 px-4 text-left">No.</th>
                     <th className="py-3 px-4 text-left">Kode Program Studi</th>
+                    <th className="py-3 px-4 text-left">Program Studi</th>
                     <th className="py-3 px-4 text-center">Aksi</th>
                   </tr>
                 </thead>
@@ -176,6 +195,7 @@ function AdminPrograms() {
                     <tr key={program.program_code} className="hover:bg-gray-50">
                       <td className="py-3 px-4">{index + 1}</td>
                       <td className="py-3 px-4 font-medium">{program.program_code}</td>
+                      <td className="py-3 px-4 font-medium">{program.program_name}</td>
                       <td className="py-3 px-4 text-center">
                         <button
                           onClick={() => handleDeleteProgram(program.program_code)}

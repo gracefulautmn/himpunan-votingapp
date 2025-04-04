@@ -22,9 +22,9 @@ export default function AdminLayout({ children, title, activeMenu }) {
       {/* Sidebar */}
       <div className="w-64 bg-gradient-to-b from-white-600 to-blue-200 text-white shadow-lg">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-center text-blue-200">Admin Panel</h2>
+          <h2 className="text-2xl font-bold text-center text-blue-500">Admin Panel</h2>
           <div className="flex justify-center mt-4">
-            <UserCircle size={64} className="text-blue-200" />
+            <UserCircle size={64} className="text-blue-500" />
           </div>
         </div>
         

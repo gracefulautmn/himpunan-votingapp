@@ -31,14 +31,13 @@ function AdminDashboard() {
   const fetchResults = async () => {
     setLoading(true);
     try {
-      // First, get all candidates
       const { data: candidates, error: candidatesError } = await supabase
         .from('candidates')
         .select('id, ketua, wakil, kabinet');
   
       if (candidatesError) throw candidatesError;
+      console.log("Candidates:", candidates); // Debugging
   
-      // Then calculate votes for each candidate
       const resultsWithVotes = await Promise.all(
         candidates.map(async (candidate) => {
           const { count, error: votesError } = await supabase
@@ -48,6 +47,8 @@ function AdminDashboard() {
   
           if (votesError) throw votesError;
   
+          console.log(`Votes for ${candidate.ketua} - ${candidate.wakil}:`, count); // Debugging
+  
           return {
             ...candidate,
             votes: count || 0
@@ -55,16 +56,18 @@ function AdminDashboard() {
         })
       );
   
-      // Calculate total votes
       const total = resultsWithVotes.reduce((sum, item) => sum + item.votes, 0);
       
-      // Format data for chart
+      console.log("Total Votes:", total); // Debugging
+  
       const formattedResults = resultsWithVotes.map(item => ({
         name: `${item.ketua} - ${item.wakil}`,
         votes: item.votes,
         kabinet: item.kabinet,
         percentage: total ? ((item.votes / total) * 100).toFixed(1) : 0
       }));
+  
+      console.log("Formatted Results:", formattedResults); // Debugging
   
       setResults(formattedResults);
       setTotalVotes(total);
@@ -74,6 +77,7 @@ function AdminDashboard() {
       setLoading(false);
     }
   };
+  
 
   const subscribeToVotes = () => {
     const subscription = supabase
