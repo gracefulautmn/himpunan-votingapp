@@ -22,7 +22,7 @@ function VerificationPage() {
         <div className="px-6 py-8">
           <div className="text-center">
             <Image 
-              src="/logo.png" 
+              src="/hmik.jpeg" 
               alt="Universitas Pertamina Logo" 
               width={120} 
               height={120}
