@@ -241,7 +241,7 @@ function AdminCandidates() {
               Foto Kandidat
             </label>
             <div className="flex items-center space-x-4">
-              <label className="flex items-center justify-center opacity-100 bg-white border border-gray-300 rounded-md py-2 px-4 hover:bg-gray-50 cursor-pointer">
+              <label className="flex items-center justify-center text-opacity-100 bg-white border border-gray-300 rounded-md py-2 px-4 hover:bg-gray-50 cursor-pointer">
                 <ImageIcon size={16} className="mr-2 text-black opacity-100" />
                 <span className="text-sm text-black text-opacity-100 ">Pilih Gambar</span>
                 <input 
