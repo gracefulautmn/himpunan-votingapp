@@ -243,7 +243,7 @@ function VerificationForm() {
               disabled={loading}
               onChange={(e) => handleInputChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-12 h-12 text-center text-xl font-bold border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-12 h-12 text-center text-opacity-100 text-xl font-bold border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />            
             ))}
           </div>
