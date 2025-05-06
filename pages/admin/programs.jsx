@@ -174,14 +174,14 @@ function AdminPrograms() {
 
         {/* Daftar Program Studi */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-black text-opacity-100">Daftar Program Studi yang Diizinkan</h2>
+          <h2 className="text-xl font-semibold mb-4 text-black opacity-100 text-opacity-100">Daftar Program Studi yang Diizinkan</h2>
           {programs.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500 text-opacity-100">Belum ada program studi yang ditambahkan.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white text-black text-opacity-100 rounded-lg overflow-hidden">
+              <table className="min-w-full bg-white text-black opacity-100 rounded-lg overflow-hidden">
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="py-3 px-4 text-left">No.</th>
