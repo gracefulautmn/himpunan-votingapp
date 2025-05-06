@@ -46,7 +46,7 @@ function AdminLoginForm() {
             Username:
           </label>
           <div className="flex rounded-md shadow-sm">
-            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+            <span className="inline-flex text-black items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
               <UserIcon size={18} />
             </span>
             <input
@@ -55,7 +55,7 @@ function AdminLoginForm() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 placeholder:text-gray-500 placeholder-opacity-100"
               placeholder="Masukkan username"
               required
             />
@@ -79,7 +79,7 @@ function AdminLoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+              className="flex-1 min-w-0 block text-black w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 placeholder:text-gray-500 placeholder-opacity-100"
               placeholder="Masukkan password"
               required
             />
