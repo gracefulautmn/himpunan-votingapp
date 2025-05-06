@@ -168,7 +168,7 @@ if (existingUser && existingUser.already_vote) {
             NIM:
           </label>
           <div className="flex rounded-md shadow-sm">
-            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-500 bg-gray-50 text-gray-500">
               <UserIcon size={18} />
             </span>
             <input

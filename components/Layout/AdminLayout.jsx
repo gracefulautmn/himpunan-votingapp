@@ -20,7 +20,7 @@ export default function AdminLayout({ children, title, activeMenu }) {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-white to-blue-50">
       {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-white-600 to-blue-200 text-white shadow-lg">
+      <div className="w-64 bg-gradient-to-b from-white-600 to-blue-200 text-white shadow-lg relative">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-center text-blue-500">Admin Panel</h2>
           <div className="flex justify-center mt-4">
@@ -28,7 +28,7 @@ export default function AdminLayout({ children, title, activeMenu }) {
           </div>
         </div>
         
-        <nav className="mt-6 px-2">
+        <nav className="mt-6 px-2 pb-20">
           <Link 
             href="/admin/dashboard" 
             className={`flex items-center px-4 py-3 rounded-lg mx-2 transition-all ${
@@ -70,7 +70,7 @@ export default function AdminLayout({ children, title, activeMenu }) {
           </Link>
         </nav>
         
-        <div className="absolute bottom-6 w-64 px-4">
+        <div className="fixed w-64 px-4 bottom-6">
           <button 
             onClick={handleLogout}
             disabled={isLoggingOut}
