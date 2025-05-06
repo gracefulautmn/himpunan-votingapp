@@ -13,9 +13,9 @@ function VerificationPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-blue-300 py-12 px-4 sm:px-6 lg:px-8 relative">
       {/* Dua logo di kiri atas */}
       <div className="absolute top-4 left-4 flex items-center">
-              <Image src="/logo.png" alt="Logo 1" width={60} height={60} className="rounded-md" />
+              <Image src="/logo.png" alt="Logo 1" width={60} height={60} className="" />
               <div className="border-l border-gray-800 mx-4 h-10"></div> {/* Garis vertikal */}
-              <Image src="/logo2.png" alt="Logo 2" width={40} height={60} className="rounded-md" />
+              <Image src="/logo2.png" alt="Logo 2" width={40} height={60} className="" />
             </div>
       
       <div className="max-w-md w-full bg-white rounded-xl shadow-2xl overflow-hidden">
