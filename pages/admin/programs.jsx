@@ -115,7 +115,7 @@ function AdminPrograms() {
         )}
 
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Kelola Program Studi yang Diizinkan</h1>
+          <h1 className="text-2xl font-bold text-black text-opacity-100">Kelola Program Studi yang Diizinkan</h1>
           <Link 
             href="/admin/dashboard" 
             className="flex items-center text-blue-600 hover:text-blue-800"
@@ -127,7 +127,7 @@ function AdminPrograms() {
 
         {/* Form Tambah Program Studi */}
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Tambah Program Studi Baru</h2>
+          <h2 className="text-xl font-semibold mb-4 text-black text-opacity-100">Tambah Program Studi Baru</h2>
           <div className="flex items-end space-x-4">
             <div className="flex-1">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="programCode">
@@ -174,14 +174,14 @@ function AdminPrograms() {
 
         {/* Daftar Program Studi */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Daftar Program Studi yang Diizinkan</h2>
+          <h2 className="text-xl font-semibold mb-4 text-black text-opacity-100">Daftar Program Studi yang Diizinkan</h2>
           {programs.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Belum ada program studi yang ditambahkan.</p>
+              <p className="text-gray-500 text-opacity-100">Belum ada program studi yang ditambahkan.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded-lg overflow-hidden">
+              <table className="min-w-full bg-white text-black text-opacity-100 rounded-lg overflow-hidden">
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="py-3 px-4 text-left">No.</th>
