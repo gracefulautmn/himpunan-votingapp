@@ -61,27 +61,24 @@ function LoginForm() {
   
       // Cek apakah user sudah terdaftar dan apakah sudah voting
       const { data: users, error: userError } = await supabase
-  .from('users')
-  .select('id, already_vote')
-  .eq('email', email);
+        .from('users')
+        .select('id, already_vote')
+        .eq('email', email);
   
-if (userError) throw userError;
+      if (userError) throw userError;
 
-const existingUser = users && users.length > 0 ? users[0] : null;
+      const existingUser = users && users.length > 0 ? users[0] : null;
 
-// Then modify the check for already voted:
-if (existingUser && existingUser.already_vote) {
-    setAlert({ 
-      show: true, 
-      message: 'Anda sudah melakukan voting. Tidak dapat login lagi.', 
-      type: 'error' 
-    });
-    setLoading(false);
-    return;  // Stop execution
-  }
-  
-      // Jika user sudah voting, hentikan proses login
-      
+      // Then modify the check for already voted:
+      if (existingUser && existingUser.already_vote) {
+        setAlert({ 
+          show: true, 
+          message: 'Anda sudah melakukan voting. Tidak dapat login lagi.', 
+          type: 'error' 
+        });
+        setLoading(false);
+        return;  // Stop execution
+      }
   
       // Buat OTP 6 digit
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -175,7 +172,7 @@ if (existingUser && existingUser.already_vote) {
               type="text"
               id="nim"
               {...register("nim")}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border border-gray-500 text-gray-900 font-medium"
               placeholder="Masukkan NIM"
             />
           </div>
@@ -187,14 +184,14 @@ if (existingUser && existingUser.already_vote) {
             Email:
           </label>
           <div className="flex rounded-md shadow-sm">
-            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-500 bg-gray-50 text-gray-500">
               <MailIcon size={18} />
             </span>
             <input
               type="email"
               id="email"
               {...register("email")}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border border-gray-500 text-gray-900 font-medium"
               placeholder="nim@student.universitaspertamina.ac.id"
             />
           </div>
@@ -223,5 +220,3 @@ if (existingUser && existingUser.already_vote) {
     </div>
   );
 }
-
-export default LoginForm;
