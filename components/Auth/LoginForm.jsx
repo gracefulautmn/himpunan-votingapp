@@ -175,7 +175,7 @@ if (existingUser && existingUser.already_vote) {
               type="text"
               id="nim"
               {...register("nim")}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 placeholder:text-gray-500 placeholder-opacity-100"
+              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 text-black placeholder:text-gray-500 placeholder-opacity-100"
               placeholder="Masukkan NIM"
             />
           </div>
@@ -194,7 +194,7 @@ if (existingUser && existingUser.already_vote) {
               type="email"
               id="email"
               {...register("email")}
-              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 placeholder:text-gray-500 placeholder-opacity-100"
+              className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 border-gray-300 placeholder:text-gray-700 placeholder-opacity-100"
               placeholder="nim@student.universitaspertamina.ac.id"
             />
           </div>
