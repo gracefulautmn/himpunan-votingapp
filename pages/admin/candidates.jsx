@@ -242,8 +242,8 @@ function AdminCandidates() {
             </label>
             <div className="flex items-center space-x-4">
               <label className="flex items-center justify-center opacity-100 bg-white border border-gray-300 rounded-md py-2 px-4 hover:bg-gray-50 cursor-pointer">
-                <ImageIcon size={16} className="mr-2 opacity-100" />
-                <span className="text-sm text-opacity-100 ">Pilih Gambar</span>
+                <ImageIcon size={16} className="mr-2 text-black opacity-100" />
+                <span className="text-sm text-black text-opacity-100 ">Pilih Gambar</span>
                 <input 
                   className="hidden" 
                   id="image" 
@@ -280,7 +280,7 @@ function AdminCandidates() {
 
         {/* Daftar Kandidat */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-black opacity-100">Daftar Kandidat</h2>
+          <h2 className="text-xl font-semibold mb-4 text-black text-opacity-100">Daftar Kandidat</h2>
           {candidates.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500 opacity-100">Belum ada kandidat yang ditambahkan.</p>
