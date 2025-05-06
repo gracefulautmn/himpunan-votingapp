@@ -149,7 +149,7 @@ function AdminCandidates() {
         )}
 
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Kelola Kandidat</h1>
+          <h1 className="text-2xl text-opacity-100 text-black font-bold">Kelola Kandidat</h1>
           <Link 
             href="/admin/dashboard" 
             className="flex items-center text-blue-600 hover:text-blue-800"
@@ -161,7 +161,7 @@ function AdminCandidates() {
 
         {/* Form Tambah Kandidat */}
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Tambah Kandidat Baru</h2>
+          <h2 className="text-xl text-opacity-100 text-black font-semibold mb-4">Tambah Kandidat Baru</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="kabinet">
@@ -241,7 +241,7 @@ function AdminCandidates() {
               Foto Kandidat
             </label>
             <div className="flex items-center space-x-4">
-              <label className="flex items-center justify-center bg-white border border-gray-300 rounded-md py-2 px-4 hover:bg-gray-50 cursor-pointer">
+              <label className="flex items-center justify-center opacity-100 bg-white border border-gray-300 rounded-md py-2 px-4 hover:bg-gray-50 cursor-pointer">
                 <ImageIcon size={16} className="mr-2" />
                 <span className="text-sm">Pilih Gambar</span>
                 <input 
