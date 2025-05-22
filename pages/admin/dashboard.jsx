@@ -34,41 +34,36 @@ function AdminDashboard() {
       const { data: candidates, error: candidatesError } = await supabase
         .from('candidates')
         .select('id, ketua, wakil, kabinet');
-  
+
       if (candidatesError) throw candidatesError;
-      console.log("Candidates:", candidates); // Debugging
-  
+
       const resultsWithVotes = await Promise.all(
         candidates.map(async (candidate) => {
           const { count, error: votesError } = await supabase
             .from('votes')
             .select('*', { count: 'exact', head: true })
             .eq('candidate_id', candidate.id);
-  
+
           if (votesError) throw votesError;
-  
-          console.log(`Votes for ${candidate.ketua} - ${candidate.wakil}:`, count); // Debugging
-  
+
           return {
             ...candidate,
             votes: count || 0
           };
         })
       );
-  
-      const total = resultsWithVotes.reduce((sum, item) => sum + item.votes, 0);
-      
-      console.log("Total Votes:", total); // Debugging
-  
-      const formattedResults = resultsWithVotes.map(item => ({
+
+      const sortedResultsWithVotes = resultsWithVotes.sort((a, b) => b.votes - a.votes);
+
+      const total = sortedResultsWithVotes.reduce((sum, item) => sum + item.votes, 0);
+
+      const formattedResults = sortedResultsWithVotes.map(item => ({
         name: `${item.ketua} - ${item.wakil}`,
         votes: item.votes,
         kabinet: item.kabinet,
         percentage: total ? ((item.votes / total) * 100).toFixed(1) : 0
       }));
-  
-      console.log("Formatted Results:", formattedResults); // Debugging
-  
+
       setResults(formattedResults);
       setTotalVotes(total);
     } catch (error) {
@@ -77,19 +72,18 @@ function AdminDashboard() {
       setLoading(false);
     }
   };
-  
+
 
   const subscribeToVotes = () => {
-    const subscription = supabase
+    const channel = supabase
       .channel('public:votes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, (payload) => {
-        console.log('Change received!', payload);
         fetchResults();
       })
       .subscribe();
-  
+
     return () => {
-      supabase.removeChannel(subscription);
+      supabase.removeChannel(channel);
     };
   };
 
@@ -141,22 +135,22 @@ function AdminDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {results.map((result, index) => (
-                <div key={index} className="bg-white border border-slate-200 rounded-lg shadow-sm p-5 transition-all hover:shadow-md">
+                <div key={index} className={`bg-white border border-slate-200 rounded-lg shadow-sm p-5 transition-all hover:shadow-md ${index === 0 && result.votes > 0 ? 'ring-2 ring-emerald-500' : ''}`}>
                   <div className="mb-2">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      index === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                      index === 0 && result.votes > 0 && results.every(r => result.votes >= r.votes) ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {index === 0 ? 'Leading' : `Rank ${index + 1}`}
+                      {index === 0 && result.votes > 0 && results.every(r => result.votes >= r.votes) ? 'Leading' : `Rank ${index + 1}`}
                     </span>
                   </div>
                   <h3 className="font-bold text-slate-800 text-lg">{result.kabinet}</h3>
                   <p className="text-slate-600 mb-3">{result.name}</p>
                   <div className="flex items-center mb-2">
                     <div className="w-full bg-slate-200 rounded-full h-4 mr-2">
-                      <div 
+                      <div
                         className={`h-4 rounded-full ${
-                          index === 0 ? 'bg-emerald-500' : 'bg-blue-500'
-                        }`} 
+                          index === 0 && result.votes > 0 && results.every(r => result.votes >= r.votes) ? 'bg-emerald-500' : 'bg-blue-500'
+                        }`}
                         style={{ width: `${result.percentage}%` }}
                       ></div>
                     </div>
@@ -175,8 +169,8 @@ function AdminDashboard() {
                   margin={{ top: 20, right: 20, left: 20, bottom: 60 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis 
-                    dataKey="name" 
+                  <XAxis
+                    dataKey="name"
                     tick={{ angle: -45, textAnchor: 'end', fontSize: 12, fill: '#64748b' }}
                     height={60}
                     stroke="#cbd5e1"
@@ -204,25 +198,27 @@ function AdminDashboard() {
                   </thead>
                   <tbody className="bg-white divide-y divide-slate-200">
                     {results.map((result, index) => (
-                      <tr key={index} className="hover:bg-slate-50 transition-colors">
+                      <tr key={index} className={`hover:bg-slate-50 transition-colors ${index === 0 && result.votes > 0 && results.every(r => result.votes >= r.votes) ? 'bg-emerald-50' : ''}`}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">{index + 1}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{result.kabinet}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">{result.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 text-center">{result.votes}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 text-center">
                           <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            index === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                            index === 0 && result.votes > 0 && results.every(r => result.votes >= r.votes) ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
                           }`}>
                             {result.percentage}%
                           </span>
                         </td>
                       </tr>
                     ))}
-                    <tr className="bg-slate-50 font-medium">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800" colSpan="3">Total</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 text-center">{totalVotes}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 text-center">100%</td>
-                    </tr>
+                    {results.length > 0 && (
+                        <tr className="bg-slate-50 font-medium">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800" colSpan={3}>Total</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 text-center">{totalVotes}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 text-center">{totalVotes > 0 ? '100%' : '0%'}</td>
+                        </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
