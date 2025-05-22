@@ -56,17 +56,18 @@ function AdminResults() {
       // Hitung total votes
       const total = resultsWithVotes.reduce((sum, item) => sum + item.votes, 0);
       
-      // Format data untuk chart
       const formattedResults = resultsWithVotes.map(item => ({
-        name: `${item.ketua} - ${item.wakil}`,
+        name: ${item.ketua} - ${item.wakil},
         votes: item.votes,
-        ketua: item.ketua,
-        wakil: item.wakil,
+        kabinet: item.kabinet,
         percentage: total ? ((item.votes / total) * 100).toFixed(1) : 0
       }));
-  
-      setResults(formattedResults);
+
+      const sortedResults = [...formattedResults].sort((a, b) => b.votes - a.votes);
+
+      setResults(sortedResults);
       setTotalVotes(total);
+    
     } catch (error) {
       console.error("Error fetching results:", error);
     } finally {
