@@ -85,7 +85,7 @@ function VerificationForm() {
         .from('users')
         .select('*')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
       if (userError) throw userError;
       if (!userData) throw new Error('User tidak ditemukan');
