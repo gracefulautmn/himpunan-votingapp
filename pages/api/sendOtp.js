@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     // Konfigurasi transporter Nodemailer
     // Catatan: Sebaiknya simpan kredensial email di environment variables
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST, // misalnya: 'smtp.gmail.com'
+      host: process.env.EMAIL_HOST, 
       port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: process.env.EMAIL_SECURE === 'true',
       auth: {
