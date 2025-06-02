@@ -1,0 +1,548 @@
+-- -----------------------------------------------------------------------------
+-- 0. Helper function to check if user is admin (adjust as needed)
+-- -----------------------------------------------------------------------------
+-- This is a simplified way. In production, you might check a custom claim
+-- or a separate admin_users table.
+-- For this example, we'll assume 'admin' role exists or use service_role for certain backend operations.
+-- If you create users with specific roles via Supabase Auth, you can use auth.role().
+-- For now, let's assume an 'admin_users' table or a specific metadata flag.
+-- A common approach is to have a table `profiles` linked to `auth.users` with a role column.
+
+-- Let's create a placeholder function. You'd need to implement the logic for how you identify admins.
+-- For example, if admins have a specific email or are listed in a table.
+-- As a simpler placeholder for RLS, we can check if the user's role is 'admin'.
+-- You would set this role for your admin users in Supabase Auth.
+CREATE OR REPLACE FUNCTION get_current_user_role()
+RETURNS TEXT AS $$
+BEGIN
+  RETURN current_setting('request.jwt.claims', true)::json->>'role';
+EXCEPTION
+  WHEN undefined_object THEN
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- -----------------------------------------------------------------------------
+-- 1. Enable RLS for all tables by default
+-- -----------------------------------------------------------------------------
+ALTER DEFAULT PRIVILEGES REVOKE ALL ON TABLES FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES REVOKE ALL ON TABLES FROM ANON;
+
+-- -----------------------------------------------------------------------------
+-- 2. Create 'allowed_programs' table
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.allowed_programs (
+  program_code TEXT PRIMARY KEY,
+  program_name TEXT NOT NULL, -- Added for better description
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+COMMENT ON TABLE public.allowed_programs IS 'Stores allowed program codes for voting eligibility.';
+
+-- Enable RLS
+ALTER TABLE public.allowed_programs ENABLE ROW LEVEL SECURITY;
+
+-- Policies for 'allowed_programs'
+CREATE POLICY "Allow admin full access to allowed_programs"
+ON public.allowed_programs
+FOR ALL
+USING (get_current_user_role() = 'admin')
+WITH CHECK (get_current_user_role() = 'admin');
+
+CREATE POLICY "Allow authenticated users to read allowed_programs"
+ON public.allowed_programs
+FOR ALL
+USING (auth.role() = 'authenticated');
+
+
+-- -----------------------------------------------------------------------------
+-- 3. Create 'users' table (voters)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.users (
+  NIM TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  program_code TEXT NOT NULL,
+  otp TEXT,
+  otp_expires_at TIMESTAMP WITH TIME ZONE,
+  last_login TIMESTAMP WITH TIME ZONE,
+  already_vote BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT fk_program_code
+    FOREIGN KEY(program_code)
+    REFERENCES public.allowed_programs(program_code)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+COMMENT ON TABLE public.users IS 'Stores voter information, OTP details, and voting status.';
+
+-- Enable RLS
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+-- Policies for 'users'
+CREATE POLICY "Allow admin full access to user data"
+ON public.users
+FOR ALL
+USING (get_current_user_role() = 'admin')
+WITH CHECK (get_current_user_role() = 'admin');
+
+CREATE POLICY "Allow users to read their own data"
+ON public.users
+FOR SELECT
+USING (auth.uid()::text = SPLIT_PART(NIM, '_auth_', 2)); -- Assuming NIM is prefixed or linked to auth.uid if users are created via Supabase Auth
+-- OR, if NIM is not directly linked to auth.uid() but email is:
+-- USING (auth.email() = email); -- This requires email to be unique and verified.
+-- For the OTP flow, the initial check might be done by a service role function.
+
+CREATE POLICY "Allow user to update their own OTP and last_login (specific conditions)"
+ON public.users
+FOR UPDATE
+USING (auth.uid()::text = SPLIT_PART(NIM, '_auth_', 2) OR auth.email() = email) -- Or however you map auth user to this table row
+WITH CHECK (
+    (get_current_user_role() != 'admin') AND -- Admins use their own policy
+    ( (SELECT already_vote FROM public.users u WHERE u.NIM = public.users.NIM) = false ) -- Can only update if not already voted for certain fields
+    -- Add specific column checks if needed, e.g., only otp, otp_expires_at, last_login can be updated by user
+);
+-- Note: Updating `already_vote` should be a privileged operation, likely via a database function triggered by a successful vote.
+
+-- It's often better to handle user creation and OTP logic via SECURITY DEFINER functions
+-- called from your API to ensure proper checks and permissions.
+
+
+-- -----------------------------------------------------------------------------
+-- 4. Create 'candidates' table
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.candidates (
+  id SERIAL PRIMARY KEY,
+  ketua VARCHAR(255) NOT NULL,
+  wakil VARCHAR(255) NOT NULL,
+  kabinet VARCHAR(255),
+  visi TEXT,
+  misi TEXT,
+  image_url TEXT, -- URL to image in Supabase Storage
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+COMMENT ON TABLE public.candidates IS 'Stores candidate information for the election.';
+
+-- Enable RLS
+ALTER TABLE public.candidates ENABLE ROW LEVEL SECURITY;
+
+-- Policies for 'candidates'
+CREATE POLICY "Allow admin full access to candidates"
+ON public.candidates
+FOR ALL
+USING (get_current_user_role() = 'admin')
+WITH CHECK (get_current_user_role() = 'admin');
+
+CREATE POLICY "Allow authenticated users to read candidates"
+ON public.candidates
+FOR SELECT
+USING (auth.role() = 'authenticated');
+
+
+-- -----------------------------------------------------------------------------
+-- 5. Create 'votes' table
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.votes (
+  id SERIAL PRIMARY KEY,
+  user_nim TEXT NOT NULL UNIQUE, -- Ensures each user votes only once
+  candidate_id INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT fk_user_nim
+    FOREIGN KEY(user_nim)
+    REFERENCES public.users(NIM)
+    ON DELETE CASCADE, -- If user is deleted, their vote is also deleted
+  CONSTRAINT fk_candidate_id
+    FOREIGN KEY(candidate_id)
+    REFERENCES public.candidates(id)
+    ON DELETE RESTRICT -- Prevent deleting a candidate if they have votes (or change to SET NULL/CASCADE as needed)
+);
+
+COMMENT ON TABLE public.votes IS 'Records votes cast by users.';
+
+-- Enable RLS
+ALTER TABLE public.votes ENABLE ROW LEVEL SECURITY;
+
+-- Policies for 'votes'
+CREATE POLICY "Allow admin to read all votes"
+ON public.votes
+FOR SELECT
+USING (get_current_user_role() = 'admin');
+
+CREATE POLICY "Allow admin to delete votes" -- For the specific scenario of resetting a user's vote
+ON public.votes
+FOR DELETE
+USING (get_current_user_role() = 'admin');
+
+-- Inserting votes should be highly controlled, ideally via a SECURITY DEFINER function
+-- that also updates users.already_vote.
+CREATE POLICY "Prevent direct public insert into votes"
+ON public.votes
+FOR INSERT
+WITH CHECK (false); -- No one can insert directly, must use a function or service role.
+
+
+-- -----------------------------------------------------------------------------
+-- 6. Create 'app_settings' table
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.app_settings (
+  id INT PRIMARY KEY DEFAULT 1, -- Enforces a single row for global settings
+  login_page_logo_url TEXT DEFAULT '/hmik.jpeg', -- Logo displayed on login/verify page (above form)
+  header_logo1_url TEXT DEFAULT '/logo.png',     -- First logo in the top-left header
+  header_logo2_url TEXT DEFAULT '/logo2.png',     -- Second logo in the top-left header
+  login_method TEXT DEFAULT 'campus_email_format' CHECK (login_method IN ('campus_email_format', 'database_email_list')),
+  election_title TEXT DEFAULT 'Pemilihan Ketua & Wakil Ketua Himpunan',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT single_row_check CHECK (id = 1)
+);
+
+COMMENT ON TABLE public.app_settings IS 'Stores global application settings like logos and login method.';
+
+-- Insert default settings if not exist
+INSERT INTO public.app_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- Enable RLS
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+
+-- Policies for 'app_settings'
+CREATE POLICY "Allow admin to manage app settings"
+ON public.app_settings
+FOR ALL
+USING (get_current_user_role() = 'admin')
+WITH CHECK (get_current_user_role() = 'admin');
+
+CREATE POLICY "Allow authenticated users to read app settings"
+ON public.app_settings
+FOR SELECT
+USING (auth.role() = 'authenticated');
+
+
+-- -----------------------------------------------------------------------------
+-- 7. Supabase Storage Bucket 'gambar' for candidate and logo images
+-- -----------------------------------------------------------------------------
+-- Create the bucket (if not already created via Supabase dashboard)
+-- This SQL won't create it, do it in the dashboard.
+-- Assume bucket 'gambar' exists.
+
+-- Policies for 'gambar' bucket (applied via Supabase Dashboard Storage Policies UI)
+-- Example policies (syntax might differ slightly in UI but logic is the same):
+
+-- Policy: "Allow admin to manage all images"
+-- Target roles: admin (or your specific admin role)
+-- Operations: SELECT, INSERT, UPDATE, DELETE
+-- USING expression: (bucket_id = 'gambar')
+-- WITH CHECK expression: (bucket_id = 'gambar')
+
+-- Policy: "Allow authenticated users to read images"
+-- Target roles: authenticated
+-- Operations: SELECT
+-- USING expression: (bucket_id = 'gambar')
+-- WITH CHECK expression: (bucket_id = 'gambar')
+
+-- Policy: "Allow specific path for public logos if needed" (e.g. if logos are public)
+-- Target roles: anon, authenticated
+-- Operations: SELECT
+-- USING expression: (bucket_id = 'gambar' AND name LIKE 'public_logos/%') -- Example path
+-- WITH CHECK expression: (bucket_id = 'gambar' AND name LIKE 'public_logos/%')
+
+-- For candidate images, if uploaded by admin, the admin policy covers it.
+-- If users could upload (not in this spec), more granular policies would be needed.
+
+-- -----------------------------------------------------------------------------
+-- 8. Database Functions (Recommended for complex/secure operations)
+-- -----------------------------------------------------------------------------
+
+-- Function to generate and store OTP
+CREATE OR REPLACE FUNCTION generate_and_store_otp(user_nim TEXT, user_email TEXT)
+RETURNS TEXT -- Returns the OTP
+LANGUAGE plpgsql
+SECURITY DEFINER -- Executes with privileges of the function owner (typically postgres)
+SET search_path = public -- Important for SECURITY DEFINER functions
+AS $$
+DECLARE
+  new_otp TEXT;
+  otp_validity_minutes INT := 10; -- OTP valid for 10 minutes
+  program_code_user TEXT;
+BEGIN
+  -- Check if user exists and get their program_code
+  SELECT program_code INTO program_code_user FROM users WHERE NIM = user_nim AND email = user_email;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'User with NIM % and email % not found.', user_nim, user_email;
+  END IF;
+
+  -- Check if program_code is allowed
+  IF NOT EXISTS (SELECT 1 FROM allowed_programs ap WHERE ap.program_code = program_code_user) THEN
+     RAISE EXCEPTION 'Program studi % untuk NIM % tidak diizinkan untuk vote.', program_code_user, user_nim;
+  END IF;
+
+  -- Check if user has already voted
+  IF EXISTS (SELECT 1 FROM users u WHERE u.NIM = user_nim AND u.already_vote = true) THEN
+    RAISE EXCEPTION 'User with NIM % has already voted.', user_nim;
+  END IF;
+
+  -- Generate 6-digit OTP
+  new_otp := LPAD(FLOOR(random() * 1000000)::TEXT, 6, '0');
+
+  -- Update user's OTP and expiry
+  UPDATE users
+  SET
+    otp = new_otp,
+    otp_expires_at = timezone('utc', now()) + (otp_validity_minutes * INTERVAL '1 minute'),
+    updated_at = timezone('utc', now())
+  WHERE NIM = user_nim;
+
+  RETURN new_otp;
+END;
+$$;
+
+-- Function to verify OTP
+CREATE OR REPLACE FUNCTION verify_user_otp(user_nim TEXT, provided_otp TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  stored_otp TEXT;
+  otp_expiry TIMESTAMP WITH TIME ZONE;
+BEGIN
+  SELECT otp, otp_expires_at INTO stored_otp, otp_expiry
+  FROM users
+  WHERE NIM = user_nim;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'User with NIM % not found for OTP verification.', user_nim;
+  END IF;
+
+  IF stored_otp = provided_otp AND timezone('utc', now()) < otp_expiry THEN
+    -- OTP is valid, clear it and update last_login
+    UPDATE users
+    SET
+      otp = NULL, -- Clear OTP after successful verification
+      otp_expires_at = NULL,
+      last_login = timezone('utc', now()),
+      updated_at = timezone('utc', now())
+    WHERE NIM = user_nim;
+    RETURN TRUE;
+  ELSE
+    -- OTP is invalid or expired
+    RETURN FALSE;
+  END IF;
+END;
+$$;
+
+-- Function to record a vote
+CREATE OR REPLACE FUNCTION record_vote(
+    p_user_nim TEXT,
+    p_candidate_id INTEGER
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    -- Check if user exists and hasn't voted
+    IF NOT EXISTS (
+        SELECT 1 FROM users
+        WHERE NIM = p_user_nim AND already_vote = FALSE
+    ) THEN
+        RAISE EXCEPTION 'User % not found or has already voted.', p_user_nim;
+    END IF;
+
+    -- Check if candidate exists
+    IF NOT EXISTS (
+        SELECT 1 FROM candidates WHERE id = p_candidate_id
+    ) THEN
+        RAISE EXCEPTION 'Candidate % not found.', p_candidate_id;
+    END IF;
+
+    -- Insert the vote
+    INSERT INTO votes (user_nim, candidate_id)
+    VALUES (p_user_nim, p_candidate_id);
+
+    -- Mark user as voted
+    UPDATE users
+    SET already_vote = TRUE,
+        updated_at = timezone('utc', now())
+    WHERE NIM = p_user_nim;
+
+EXCEPTION
+    WHEN unique_violation THEN
+        RAISE EXCEPTION 'User % has already cast a vote (unique constraint).', p_user_nim;
+    WHEN OTHERS THEN
+        RAISE; -- Re-raise other errors
+END;
+$$;
+
+
+-- Function for admin to delete user voting data
+CREATE OR REPLACE FUNCTION admin_delete_user_vote_data(p_user_nim TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER -- Requires admin privileges to call this function
+SET search_path = public
+AS $$
+DECLARE
+  v_user_exists BOOLEAN;
+  v_already_voted BOOLEAN;
+BEGIN
+  -- This function should only be callable by an admin.
+  -- The RLS on the function itself or the calling API should enforce this.
+  IF get_current_user_role() != 'admin' THEN
+    RAISE EXCEPTION 'Permission denied. Only admins can perform this action.';
+  END IF;
+
+  SELECT EXISTS(SELECT 1 FROM users WHERE NIM = p_user_nim), already_vote
+  INTO v_user_exists, v_already_voted
+  FROM users
+  WHERE NIM = p_user_nim;
+
+  IF NOT v_user_exists THEN
+    RAISE WARNING 'User with NIM % not found.', p_user_nim;
+    RETURN;
+  END IF;
+
+  -- Delete from votes table
+  DELETE FROM votes WHERE user_nim = p_user_nim;
+
+  -- If user had already_vote = true, delete from users table
+  IF v_already_voted THEN
+    DELETE FROM users WHERE NIM = p_user_nim;
+    RAISE NOTICE 'User % and their vote data deleted.', p_user_nim;
+  ELSE
+    -- If user hadn't voted yet but admin wants to clear (e.g. wrong registration),
+    -- just ensure already_vote is false. Or delete if that's the intent.
+    -- For this spec: "menghapus tabel di votes dan users ketika already_vote nya true"
+    -- So if already_vote is false, we only deleted from votes (if any entry existed).
+    -- The user record in 'users' table remains if they hadn't voted.
+    -- If the goal is to always delete the user if their vote is "reset", adjust logic.
+    -- For now, we only delete user if they had already_vote = true.
+    -- If user had not voted, but was in `users` table, and admin wants to remove them,
+    -- that's a separate user deletion action.
+    -- This function specifically handles "resetting" a vote which includes user deletion IF they had voted.
+    RAISE NOTICE 'Vote data for user % cleared. User record not deleted as already_vote was false.', p_user_nim;
+  END IF;
+
+END;
+$$;
+
+
+-- Grant execute on functions to appropriate roles
+-- Authenticated users might call generate_and_store_otp and verify_user_otp (via API)
+GRANT EXECUTE ON FUNCTION generate_and_store_otp(TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION verify_user_otp(TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION record_vote(TEXT, INTEGER) TO authenticated; -- The API calling this will ensure user is verified
+
+-- Admin function
+GRANT EXECUTE ON FUNCTION admin_delete_user_vote_data(TEXT) TO authenticated; -- Assuming admin is an authenticated user with 'admin' role checked inside function or API
+
+-- Note: For SECURITY DEFINER functions, the user calling them only needs EXECUTE permission.
+-- The function itself runs with the definer's (owner's) permissions.
+
+-- Make sure to set up your database triggers for `updated_at` columns if you want them automatically managed.
+-- Example trigger function:
+CREATE OR REPLACE FUNCTION public.moddatetime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = timezone('utc'::text, now());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply trigger to tables:
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.moddatetime();
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.candidates FOR EACH ROW EXECUTE FUNCTION public.moddatetime();
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.allowed_programs FOR EACH ROW EXECUTE FUNCTION public.moddatetime();
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.app_settings FOR EACH ROW EXECUTE FUNCTION public.moddatetime();
+
+-- Pastikan RLS diaktifkan untuk setiap tabel (seharusnya sudah dari sebelumnya)
+ALTER TABLE public.allowed_programs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.candidates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+
+-- -----------------------------------------------------------------------------
+-- Tabel: allowed_programs
+-- -----------------------------------------------------------------------------
+-- Hapus kebijakan yang ada
+DROP POLICY IF EXISTS "Allow admin full access to allowed_programs" ON public.allowed_programs;
+DROP POLICY IF EXISTS "Allow authenticated users to read allowed_programs" ON public.allowed_programs;
+DROP POLICY IF EXISTS "TEMPORARY_Allow_all_authenticated_full_access_to_allowed_programs" ON public.allowed_programs; -- Jika ada dari tes sebelumnya
+
+-- Buat kebijakan baru untuk anon
+CREATE POLICY "TEMP_TEST_ANON_ALLOW_ALL_allowed_programs"
+ON public.allowed_programs
+FOR ALL         -- Mengizinkan SELECT, INSERT, UPDATE, DELETE
+TO anon         -- Untuk peran anonim
+USING (true)    -- Kondisi untuk baris yang bisa diakses (true berarti semua baris)
+WITH CHECK (true); -- Kondisi untuk baris yang bisa dibuat/diubah (true berarti semua data valid)
+
+-- -----------------------------------------------------------------------------
+-- Tabel: users (voters)
+-- -----------------------------------------------------------------------------
+-- Hapus kebijakan yang ada
+DROP POLICY IF EXISTS "Allow admin full access to user data" ON public.users;
+DROP POLICY IF EXISTS "Allow users to read their own data" ON public.users;
+DROP POLICY IF EXISTS "Allow user to update their own OTP and last_login (specific conditions)" ON public.users;
+
+-- Buat kebijakan baru untuk anon
+CREATE POLICY "TEMP_TEST_ANON_ALLOW_ALL_users"
+ON public.users
+FOR ALL
+TO anon
+USING (true)
+WITH CHECK (true);
+
+-- -----------------------------------------------------------------------------
+-- Tabel: candidates
+-- -----------------------------------------------------------------------------
+-- Hapus kebijakan yang ada
+DROP POLICY IF EXISTS "Allow admin full access to candidates" ON public.candidates;
+DROP POLICY IF EXISTS "Allow authenticated users to read candidates" ON public.candidates;
+
+-- Buat kebijakan baru untuk anon
+CREATE POLICY "TEMP_TEST_ANON_ALLOW_ALL_candidates"
+ON public.candidates
+FOR ALL
+TO anon
+USING (true)
+WITH CHECK (true);
+
+-- -----------------------------------------------------------------------------
+-- Tabel: votes
+-- -----------------------------------------------------------------------------
+-- Hapus kebijakan yang ada
+DROP POLICY IF EXISTS "Allow admin to read all votes" ON public.votes;
+DROP POLICY IF EXISTS "Allow admin to delete votes" ON public.votes;
+DROP POLICY IF EXISTS "Prevent direct public insert into votes" ON public.votes;
+
+-- Buat kebijakan baru untuk anon
+CREATE POLICY "TEMP_TEST_ANON_ALLOW_ALL_votes"
+ON public.votes
+FOR ALL
+TO anon
+USING (true)
+WITH CHECK (true);
+
+-- -----------------------------------------------------------------------------
+-- Tabel: app_settings
+-- -----------------------------------------------------------------------------
+-- Hapus kebijakan yang ada
+DROP POLICY IF EXISTS "Allow admin to manage app settings" ON public.app_settings;
+DROP POLICY IF EXISTS "Allow authenticated users to read app settings" ON public.app_settings;
+
+-- Buat kebijakan baru untuk anon
+CREATE POLICY "TEMP_TEST_ANON_ALLOW_ALL_app_settings"
+ON public.app_settings
+FOR ALL
+TO anon
+USING (true)
+WITH CHECK (true);
