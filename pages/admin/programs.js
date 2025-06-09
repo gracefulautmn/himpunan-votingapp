@@ -1,4 +1,3 @@
-// pages/admin/programs.js
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -162,7 +161,6 @@ export default function AdminProgramsPage() {
     }
   };
 
-  // AdminLayout tidak lagi diterapkan langsung di return JSX utama
   return (
     <>
       <Head>
@@ -338,7 +336,6 @@ export default function AdminProgramsPage() {
   );
 }
 
-// AdminLayout diterapkan di sini oleh _app.js melalui getLayout
 AdminProgramsPage.getLayout = function getLayout(page) {
   return <AdminLayout pageTitle="Manajemen Program Studi">{page}</AdminLayout>;
 };

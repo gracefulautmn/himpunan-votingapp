@@ -1,4 +1,3 @@
-// pages/admin/candidates.js
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -240,7 +239,6 @@ export default function AdminCandidatesPage() {
   );
 }
 
-// AdminLayout diterapkan di sini oleh _app.js melalui getLayout
 AdminCandidatesPage.getLayout = function getLayout(page) {
   return <AdminLayout pageTitle="Manajemen Kandidat">{page}</AdminLayout>;
 };

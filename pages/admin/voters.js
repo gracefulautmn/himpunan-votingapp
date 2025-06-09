@@ -1,4 +1,3 @@
-// pages/admin/voters.js
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -417,7 +416,6 @@ export default function AdminVotersPage() {
   );
 }
 
-// AdminLayout diterapkan di sini oleh _app.js melalui getLayout
 AdminVotersPage.getLayout = function getLayout(page) {
   return <AdminLayout pageTitle="Data Pemilih">{page}</AdminLayout>;
 };

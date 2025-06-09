@@ -157,7 +157,6 @@ export default function AdminLoginPage() {
   );
 }
 
-// AdminLoginPage does not use the default Layout
 AdminLoginPage.getLayout = function getLayout(page) {
   return <>{page}</>; // Return page as is, without the main Layout wrapper
 };

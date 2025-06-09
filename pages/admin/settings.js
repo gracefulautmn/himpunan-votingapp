@@ -247,13 +247,7 @@ export default function AdminSettingsPage() {
   const watchedHeaderLogo1Url = watch('header_logo1_url');
   const watchedHeaderLogo2Url = watch('header_logo2_url');
 
-  // AdminLayout tidak lagi diterapkan langsung di return JSX utama
   if (loadingData) {
-    // Saat loading, kita juga ingin AdminLayout diterapkan jika sudah terautentikasi
-    // Namun, karena fetchSettings bergantung pada sesi, kita tampilkan Loading global dulu
-    // Atau, jika ingin layout tetap ada saat loading, AdminLayout perlu menangani state loading internal
-    // Untuk saat ini, halaman settings akan di-render oleh _app.js dengan getLayout
-    // jadi return Loading di sini akan berada di dalam AdminLayout jika getLayout sudah dipanggil
     return <Loading message="Memuat pengaturan..." />;
   }
 
@@ -354,7 +348,6 @@ export default function AdminSettingsPage() {
   );
 }
 
-// AdminLayout diterapkan di sini oleh _app.js melalui getLayout
 AdminSettingsPage.getLayout = function getLayout(page) {
   return <AdminLayout pageTitle="Pengaturan Aplikasi">{page}</AdminLayout>;
 };

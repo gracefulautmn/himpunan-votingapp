@@ -40,20 +40,20 @@ export default function Layout({ children }) {
         {/* {commonHeader} */}
         
         <div className="absolute top-4 right-4 z-20 flex items-center space-x-3">
-          {isAdmin && user && (
-            <>
-              <Link href="/admin" passHref className="text-sm font-medium hover:text-indigo-500 flex items-center">
-                <Shield size={18} className="mr-1" /> Admin Dashboard
-              </Link>
-              <button 
-                onClick={adminLogout}
-                className="text-sm font-medium hover:text-red-500 flex items-center"
-                title="Logout Admin"
-              >
-                <LogOut size={18} className="mr-1" /> Logout
-              </button>
-            </>
-          )}
+          {/* {isAdmin && user && (
+            // <>
+            //   <Link href="/admin" passHref className="text-sm font-medium hover:text-indigo-500 flex items-center">
+            //     <Shield size={18} className="mr-1" /> Admin Dashboard
+            //   </Link>
+            //   <button 
+            //     onClick={adminLogout}
+            //     className="text-sm font-medium hover:text-red-500 flex items-center"
+            //     title="Logout Admin"
+            //   >
+            //     <LogOut size={18} className="mr-1" /> Logout
+            //   </button>
+            // </>
+          )} */}
         
         </div>
       </header>

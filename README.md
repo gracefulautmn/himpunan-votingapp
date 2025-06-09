@@ -4,7 +4,9 @@ panduan :
 2.paste sqlsupabase.txt ke sql snippet supabase
 3.run, kemudian add supabase url & anon key ke .env.local
 4.tambahkan juga akun admin di supabase authentication
-5.pastikan semua library terinstall
+5.buat bucket baru di storage dengan nama "gambar"
+6.pastikan semua library terinstall
+7.npm run dev
 ```
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
