@@ -1,4 +1,4 @@
-import { supabase } from '../../../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../../../lib/supabaseClient';
 import { withAdminAuth } from '../../../../lib/withAdminAuth';
 
 async function handler(req, res) {
@@ -14,9 +14,9 @@ async function handler(req, res) {
   }
 
   switch (req.method) {
-    case 'GET': // Should not be needed if list is comprehensive, but can be for direct fetch
+    case 'GET':
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
           .from('allowed_programs')
           .select('*')
           .eq('program_code', programCode)
@@ -30,8 +30,7 @@ async function handler(req, res) {
         }
         return res.status(200).json(data);
       } catch (error) {
-        console.error(`Error fetching program ${programCode}:`, error);
-        return res.status(500).json({ message: `Gagal mengambil data program studi: ${error.message}` });
+        return res.status(500).json({ message: 'Gagal mengambil data program studi.' });
       }
 
     case 'PUT':
@@ -42,7 +41,7 @@ async function handler(req, res) {
       }
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
           .from('allowed_programs')
           .update({ program_name, updated_at: new Date().toISOString() })
           .eq('program_code', programCode)
@@ -57,29 +56,25 @@ async function handler(req, res) {
         }
         return res.status(200).json({ message: 'Program studi berhasil diperbarui.', program: data });
       } catch (error) {
-        console.error(`Error updating program ${programCode}:`, error);
-        return res.status(500).json({ message: `Gagal memperbarui program studi: ${error.message}` });
+        return res.status(500).json({ message: 'Gagal memperbarui program studi.' });
       }
 
     case 'DELETE':
       try {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('allowed_programs')
           .delete()
           .eq('program_code', programCode);
 
         if (error) {
-          if (error.code === '23503') { // Foreign key violation (e.g., users are linked to this program)
+          if (error.code === '23503') {
              return res.status(409).json({ message: 'Gagal menghapus program studi: Masih ada pengguna yang terdaftar pada program studi ini.' });
           }
           throw error;
         }
-        // Check if any row was actually deleted, though Supabase delete doesn't directly return count of affected rows easily without .select()
-        // For simplicity, we assume success if no error.
         return res.status(200).json({ message: `Program studi dengan kode '${programCode}' berhasil dihapus.` });
       } catch (error) {
-        console.error(`Error deleting program ${programCode}:`, error);
-        return res.status(500).json({ message: `Gagal menghapus program studi: ${error.message}` });
+        return res.status(500).json({ message: 'Gagal menghapus program studi.' });
       }
 
     default:

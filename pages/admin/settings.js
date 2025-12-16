@@ -76,7 +76,7 @@ const ImageUploadField = ({ name, label, currentImageUrl, setValue, supabaseClie
                         }
                     }
                 } catch (e) {
-                    console.warn("Could not parse or delete old image URL:", currentImageUrl, e);
+                    
                 }
             }
 
@@ -91,7 +91,6 @@ const ImageUploadField = ({ name, label, currentImageUrl, setValue, supabaseClie
             setImageFile(null);
             return publicUrlData.publicUrl;
         } catch (err) {
-            console.error(`Error uploading ${name}:`, err);
             setFormAlert({ show: true, message: `Gagal mengunggah ${label}: ${err.message}`, type: 'error' });
             return currentImageUrl;
         } finally {
@@ -192,7 +191,6 @@ export default function AdminSettingsPage() {
             reset(data);
         }
     } catch (err) {
-        console.error("Error fetching settings:", err);
         setPageError(err.message);
     } finally {
         setLoadingData(false);
@@ -236,7 +234,6 @@ export default function AdminSettingsPage() {
         updateContextSettings(result.settings);
         
     } catch (err) {
-        console.error("Save settings error:", err);
         setFormAlert({ show: true, message: err.message, type: 'error' });
     } finally {
         setIsSubmitting(false);
@@ -256,15 +253,6 @@ export default function AdminSettingsPage() {
       <Head>
         <title>Pengaturan Aplikasi - Admin Panel</title>
       </Head>
-
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">
-          Pengaturan Umum Aplikasi
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Konfigurasi tampilan, judul, dan metode login untuk sistem voting.
-        </p>
-      </div>
 
       {pageError && !loadingData && <Alert message={pageError} type="info" onClose={() => setPageError(null)} />}
       

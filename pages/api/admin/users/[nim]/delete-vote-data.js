@@ -1,6 +1,5 @@
-// pages/api/admin/users/[nim]/delete-vote-data.js
 import { requireAdmin } from '../../../../../lib/adminAuth';
-import { supabase } from '../../../../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../../../../lib/supabaseClient';
 
 async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -11,8 +10,7 @@ async function handler(req, res) {
   const { nim } = req.query;
 
   try {
-    // Reset vote status for user
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('users')
       .update({ already_vote: false })
       .eq('nim', nim)
@@ -26,21 +24,19 @@ async function handler(req, res) {
       });
     }
 
-    // Optional: Also delete from votes table if exists
     try {
-      await supabase
+      await supabaseAdmin
         .from('votes')
         .delete()
         .eq('user_nim', nim);
     } catch (voteError) {
-      console.log('No votes table or vote data to delete:', voteError);
+      
     }
 
     res.status(200).json({ 
       message: `Data vote untuk NIM ${nim} berhasil dihapus`
     });
   } catch (error) {
-    console.error('Delete vote data error:', error);
     res.status(500).json({ 
       message: error.message || 'Gagal menghapus data vote' 
     });

@@ -9,13 +9,11 @@ import { useAuth } from '../../context/AuthContext';
 import { BarChartBig, Users, CheckSquare, Percent, BarChart, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
-// Helper function to calculate percentage
 const calculatePercentage = (count, total) => {
   if (total === 0) return "0.0";
   return ((count / total) * 100).toFixed(1);
 };
 
-// --- Reusable StatCard Component ---
 const StatCard = ({ title, value, icon, bgColor }) => (
   <div className={`p-5 rounded-xl shadow-lg ${bgColor}`}>
     <div className="flex items-center justify-between mb-2">
@@ -51,7 +49,6 @@ export default function AdminDashboardPage() {
       const data = await response.json();
       setStats(data);
     } catch (err) {
-      console.error("Error fetching stats:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -68,15 +65,6 @@ export default function AdminDashboardPage() {
         <title>Dashboard - Admin Panel</title>
       </Head>
 
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">
-          Selamat Datang, {user?.email ? user.email.split('@')[0] : 'Admin'}!
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Berikut adalah ringkasan sistem voting online Anda secara real-time.
-        </p>
-      </div>
-
       {error && <Alert message={error} type="error" onClose={() => setError(null)} />}
       
       {loading ? (
@@ -85,7 +73,6 @@ export default function AdminDashboardPage() {
         <Alert message="Data statistik tidak tersedia atau gagal dimuat." type="info" />
       ) : (
         <>
-          {/* --- Stats Cards --- */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
               title="Suara Masuk"
@@ -113,9 +100,7 @@ export default function AdminDashboardPage() {
             />
           </div>
 
-          {/* --- Main Content Grid --- */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Side: Vote Results */}
+          <div className=" lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6">
               <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-1">
                 Hasil Perolehan Suara per Kandidat
@@ -146,7 +131,7 @@ export default function AdminDashboardPage() {
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-6 overflow-hidden">
                         <div 
                           className="bg-indigo-500 h-full rounded-full transition-all duration-500 ease-out flex items-center justify-center"
-                          // CORRECTED: Percentage is based on total votes, not max votes.
+                          
                           style={{ width: `${calculatePercentage(candidate.count || 0, stats.totalVotesCasted || 0)}%` }}
                         >
                            <span className="text-xs font-bold text-white px-2">
@@ -159,24 +144,6 @@ export default function AdminDashboardPage() {
                 </div>
               )}
             </div>
-
-            {/* Right Side: Quick Actions */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-              <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Aksi Cepat</h2>
-              <div className="space-y-3">
-                <Link href="/admin/candidates/new" passHref>
-                   <button className="w-full text-left px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm rounded-md transition-colors">Tambah Kandidat Baru</button>
-                </Link>
-                <Link href="/admin/vote-chart" passHref>
-                   <button className="w-full text-left px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors flex items-center">
-                     <BarChart className="w-4 h-4 mr-2"/> Lihat Grafik Vertikal
-                   </button>
-                </Link>
-                 <button className="w-full text-left px-4 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-md transition-colors flex items-center">
-                    <ExternalLink className="w-4 h-4 mr-2"/> Export Data Pemilih
-                 </button>
-              </div>
-            </div>
           </div>
         </>
       )}
@@ -184,7 +151,6 @@ export default function AdminDashboardPage() {
   );
 }
 
-// Apply AdminLayout via _app.js
 AdminDashboardPage.getLayout = function getLayout(page) {
   return <AdminLayout pageTitle="Dashboard">{page}</AdminLayout>;
 };

@@ -40,7 +40,6 @@ export default function StandaloneVoteChartPage() {
       setStats(data);
       setError(null);
     } catch (err) {
-      console.error("Error fetching stats:", err);
       setError(err.message);
     }
   };
@@ -56,13 +55,11 @@ export default function StandaloneVoteChartPage() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'votes' },
         (payload) => {
-          console.log('Perubahan terdeteksi! Mengambil data baru...', payload);
           fetchStats();
         }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Berhasil terhubung ke channel Realtime!');
           setIsLive(true);
         } else {
           setIsLive(false);

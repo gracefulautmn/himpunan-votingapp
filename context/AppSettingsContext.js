@@ -24,13 +24,12 @@ export const AppSettingsProvider = ({ children }) => {
           .single();
 
         if (error) {
-          console.error('Error fetching app settings:', error);
-          // Use default settings if fetch fails
+          
         } else if (data) {
           setSettings(data);
         }
       } catch (err) {
-        console.error('Client-side error fetching app settings:', err);
+        
       } finally {
         setLoadingSettings(false);
       }
@@ -50,14 +49,12 @@ export const AppSettingsProvider = ({ children }) => {
         .single();
       
       if (error) {
-        console.error('Error updating app settings:', error);
         throw error;
       }
       if (data) {
         setSettings(data);
       }
     } catch (err) {
-      console.error('Client-side error updating app settings:', err);
       throw err;
     } finally {
       setLoadingSettings(false);

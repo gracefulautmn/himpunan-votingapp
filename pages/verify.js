@@ -119,12 +119,10 @@ export default function VerifyPage() {
         setAlert({ show: true, message: data.message || 'Verifikasi OTP gagal.', type: 'error' });
       } else {
         setAlert({ show: true, message: 'Verifikasi berhasil! Mengarahkan ke halaman vote...', type: 'success' });
-        verifyVoterOtp(); // Update AuthContext state
-        // The AuthContext useEffect or this timeout will redirect
+        verifyVoterOtp();
         setTimeout(() => router.push('/vote'), 1500);
       }
     } catch (error) {
-      console.error("OTP Verification error:", error);
       setAlert({ show: true, message: 'Terjadi kesalahan. Silakan coba lagi.', type: 'error' });
     } finally {
       setLoading(false);
@@ -148,12 +146,11 @@ export default function VerifyPage() {
         setAlert({ show: true, message: data.message || 'Gagal mengirim ulang OTP.', type: 'error' });
       } else {
         setAlert({ show: true, message: 'OTP baru telah dikirim ke email Anda.', type: 'success' });
-        setResendCooldown(60); // 60 seconds cooldown
-        setOtp(new Array(OTP_LENGTH).fill("")); // Clear OTP fields
+        setResendCooldown(60);
+        setOtp(new Array(OTP_LENGTH).fill(""));
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      console.error("Resend OTP error:", error);
       setAlert({ show: true, message: 'Terjadi kesalahan saat mengirim ulang OTP.', type: 'error' });
     } finally {
       setLoading(false);

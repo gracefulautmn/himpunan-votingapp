@@ -42,13 +42,13 @@ export default function SideNav() {
       {/* Header */}
       <div className="h-16 flex items-center px-4 border-b border-gray-200 dark:border-gray-700">
          <img 
-            src={settings.login_page_logo_url || '/hmik.jpeg'} 
+            src={'/hmik.jpeg'} 
             alt="App Logo" 
             className="h-8 w-auto mr-2 rounded object-contain"
             onError={(e) => e.target.src = 'https://placehold.co/32x32/333333/FFFFFF?text=L'}
         />
         <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 truncate">
-          {settings.election_title ? settings.election_title.split(' ')[0] : 'Admin'} Panel
+          Admin Panel
         </h1>
       </div>
 
@@ -74,7 +74,7 @@ export default function SideNav() {
           className="w-full flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-700 dark:hover:text-white transition-colors duration-150"
         >
           <LogOut className="w-5 h-5 mr-2" />
-          Logout Admin
+          Logout
         </button>
       </div>
     </div>

@@ -69,7 +69,6 @@ export default function AdminVotersPage() {
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
     } catch (err) {
-      console.error("Error fetching voters:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -80,7 +79,6 @@ export default function AdminVotersPage() {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) {
-        console.warn('Sesi tidak valid saat mengambil program studi.');
         return;
       }
       const response = await fetch('/api/admin/programs', {
@@ -92,7 +90,7 @@ export default function AdminVotersPage() {
       const data = await response.json();
       setAvailablePrograms(data || []);
     } catch (err) {
-      console.error("Error fetching available programs:", err);
+      
     }
   }, []);
 
@@ -194,10 +192,7 @@ export default function AdminVotersPage() {
       fetchVoters(currentPage, searchTerm, programFilter, statusFilter);
       closeDeleteModal();
     } catch (err) {
-      console.error("Error deleting user vote data:", err);
-      // Set error to be displayed in the modal or page alert
-      setError(err.message); 
-      // alert(`Error: ${err.message}`); // Alert can be redundant if error state is used
+      setError(err.message);
     } finally {
       setIsDeleting(false);
     }
@@ -215,7 +210,7 @@ export default function AdminVotersPage() {
         <title>Data Pemilih - Admin Panel</title>
       </Head>
 
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-center">
+      {/* <div className="mb-6 flex flex-col sm:flex-row justify-between items-center">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">
             Daftar Pemilih Terdaftar
@@ -224,7 +219,7 @@ export default function AdminVotersPage() {
             Lihat dan kelola data mahasiswa yang terdaftar dalam sistem voting.
           </p>
         </div>
-      </div>
+      </div> */}
 
       {error && !showDeleteModal && <Alert message={error} type="error" onClose={() => setError(null)} />} {/* Show page-level error only if modal is not open or error is not from modal */}
       

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
@@ -35,17 +35,16 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Redirect if voter already in session and not verified, or already verified
-   useState(() => {
+  useEffect(() => {
     if (voterSession.nim && !voterSession.isOtpVerified && voterSession.alreadyVoted === false) {
-      router.push('/verify'); // Go to verify if OTP was sent but not verified
+      router.push('/verify');
     } else if (voterSession.nim && voterSession.isOtpVerified) {
-      router.push('/vote'); // Go to vote if already verified
+      router.push('/vote');
     } else if (voterSession.alreadyVoted === true) {
-       // Stay on login but maybe show a message or rely on API to block
+      
     }
     if (isAdmin && adminUser) {
-      router.push('/admin'); // Redirect admin to dashboard
+      router.push('/admin');
     }
   }, [voterSession, isAdmin, adminUser, router]);
 
@@ -54,7 +53,6 @@ export default function LoginPage() {
     setLoading(true);
     setAlert({ show: false, message: '', type: '' });
 
-    // Client-side validation for email format based on login_method
     if (!loadingSettings && settings.login_method === 'campus_email_format') {
       if (!formData.email.endsWith('@student.universitaspertamina.ac.id')) {
         setAlert({ show: true, message: 'Gunakan email mahasiswa Universitas Pertamina (@student.universitaspertamina.ac.id)', type: 'error' });
@@ -74,12 +72,10 @@ export default function LoginPage() {
       if (!response.ok) {
         setAlert({ show: true, message: data.message || 'Login gagal.', type: 'error' });
       } else {
-        // Store NIM and email in AuthContext/local state to pass to verify page
         loginVoter(data.nim, data.email, data.programName, data.alreadyVoted);
         router.push('/verify');
       }
     } catch (error) {
-      console.error("Login submission error:", error);
       setAlert({ show: true, message: 'Terjadi kesalahan. Silakan coba lagi.', type: 'error' });
     } finally {
       setLoading(false);

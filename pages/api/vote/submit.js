@@ -1,5 +1,4 @@
-// pages/api/vote/submit.js
-import { supabase } from '../../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,56 +11,49 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'NIM dan ID Kandidat diperlukan.' });
   }
 
+  const parsedCandidateId = parseInt(candidateId, 10);
+  if (isNaN(parsedCandidateId) || parsedCandidateId < 1) {
+    return res.status(400).json({ message: 'ID Kandidat tidak valid.' });
+  }
+
   try {
-    const { data: user, error: fetchUserError } = await supabase
-      .from('users')
-      .select('already_vote, otp, otp_expires_at')
-      .eq('nim', nim)
-      .single();
-
-    if (fetchUserError && fetchUserError.code !== 'PGRST116') {
-        console.error('Database error fetching user before voting:', fetchUserError);
-        return res.status(500).json({ message: 'Gagal memeriksa data pengguna: ' + fetchUserError.message });
-    }
-    
-    if (!user) {
-      console.warn(`User with nim '${nim}' not found before voting.`);
-      return res.status(404).json({ message: 'Pengguna tidak ditemukan atau belum terverifikasi.' });
-    }
-
-    if (user.already_vote) {
-      return res.status(403).json({ message: 'Anda sudah memberikan suara sebelumnya.' });
-    }
-
-    if (user.otp !== null || user.otp_expires_at !== null) {
-       console.warn(`Attempt to vote for user '${nim}' whose OTP is not cleared.`);
-       return res.status(403).json({ message: 'Sesi verifikasi OTP belum selesai. Silakan login dan verifikasi OTP kembali.' });
-    }
-
-    const { error: rpcError } = await supabase.rpc('record_vote', {
+    const { error: rpcError } = await supabaseAdmin.rpc('record_vote', {
       p_user_nim: nim,
-      p_candidate_id: parseInt(candidateId, 10),
+      p_candidate_id: parsedCandidateId,
     });
 
     if (rpcError) {
-      console.error('Error from record_vote RPC:', rpcError);
-      if (rpcError.message.includes('already voted')) {
-        return res.status(403).json({ message: 'Gagal mencatat suara: Anda sudah memberikan suara.' });
+      if (rpcError.message.includes('already voted') || 
+          rpcError.message.includes('duplicate detected')) {
+        return res.status(403).json({ 
+          message: 'Anda sudah memberikan suara sebelumnya.',
+          errorCode: 'ALREADY_VOTED'
+        });
       }
+      
       if (rpcError.message.includes('not found')) {
-        return res.status(404).json({ message: `Gagal mencatat suara: ${rpcError.message}` });
+        return res.status(404).json({ 
+          message: 'Pengguna atau kandidat tidak ditemukan.',
+          errorCode: 'NOT_FOUND'
+        });
       }
-      return res.status(500).json({ message: 'Gagal mencatat suara: ' + rpcError.message });
+      
+      return res.status(500).json({ 
+        message: 'Gagal mencatat suara. Silakan coba lagi.',
+        errorCode: 'VOTE_FAILED'
+      });
     }
 
     return res.status(200).json({ 
       message: 'Suara Anda berhasil dicatat. Terima kasih atas partisipasi Anda!',
       action: 'auto_logout',
-      delay: 10000 // Diubah menjadi 10000 milidetik (10 detik)
+      delay: 10000
     });
 
   } catch (error) {
-    console.error('Submit Vote API error:', error);
-    return res.status(500).json({ message: 'Terjadi kesalahan pada server: ' + error.message });
+    return res.status(500).json({ 
+      message: 'Terjadi kesalahan pada server. Silakan coba lagi.',
+      errorCode: 'SERVER_ERROR'
+    });
   }
 }

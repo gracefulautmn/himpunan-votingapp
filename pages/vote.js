@@ -27,14 +27,11 @@ export default function VotePage() {
 
 
   useEffect(() => {
-    // Protect route: Must be OTP verified, NIM must exist, and not already voted (initially)
-    if (!loadingAuth) { // Ensure auth context is loaded
+    if (!loadingAuth) {
         if (!voterSession.nim || !voterSession.isOtpVerified) {
-            console.log("Redirecting: NIM or OTP verification missing.");
             router.push('/login');
         } else if (voterSession.alreadyVoted === true) {
-            console.log("User has already voted, showing thank you.");
-            setShowThankYou(true); // Show thank you if already voted from context
+            setShowThankYou(true);
             setLoadingPage(false);
         } else {
             fetchCandidates();
@@ -61,16 +58,13 @@ export default function VotePage() {
       const { data, error } = await supabase
         .from('candidates')
         .select('*');
-        // .order('id', { ascending: true }); // Optional: order candidates
 
       if (error) {
-        console.error('Error fetching candidates:', error);
-        setAlert({ show: true, message: 'Gagal memuat daftar kandidat: ' + error.message, type: 'error' });
+        setAlert({ show: true, message: 'Gagal memuat daftar kandidat.', type: 'error' });
       } else {
         setCandidates(data || []);
       }
     } catch (error) {
-      console.error('Client-side error fetching candidates:', error);
       setAlert({ show: true, message: 'Terjadi kesalahan saat memuat kandidat.', type: 'error' });
     } finally {
       setLoadingPage(false);
@@ -109,29 +103,24 @@ export default function VotePage() {
         if (response.status === 403) { 
             voterHasVoted(); 
             setShowThankYou(true);
-            // Set countdown untuk redirect
             setTimeLeftRedirect(5);
         }
       } else {
-        // Tampilkan notifikasi sukses SEBELUM mengubah status
         setAlert({ show: true, message: data.message || 'Suara berhasil dicatat!', type: 'success' });
         
-        // Tunggu 2 detik sebelum menampilkan halaman thank you
         setTimeout(() => {
             voterHasVoted(); 
             setShowThankYou(true);
             setSelectedCandidateId(null);
 
-            // Set countdown untuk redirect berdasarkan response API
             if (data.action === 'auto_logout' && data.delay) {
                 setTimeLeftRedirect(Math.floor(data.delay / 1000));
             } else {
-                setTimeLeftRedirect(5); // Default 5 detik jika tidak ada dari API
+                setTimeLeftRedirect(5);
             }
-        }, 2000); // Delay 2 detik untuk menampilkan notifikasi sukses
+        }, 2000);
       }
     } catch (error) {
-      console.error("Vote submission error:", error);
       setAlert({ show: true, message: 'Terjadi kesalahan. Silakan coba lagi.', type: 'error' });
     } finally {
       setLoadingVote(false);

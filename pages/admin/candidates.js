@@ -41,7 +41,6 @@ export default function AdminCandidatesPage() {
       const data = await response.json();
       setCandidates(data);
     } catch (err) {
-      console.error("Error fetching candidates:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -97,16 +96,10 @@ export default function AdminCandidatesPage() {
   
       const result = await response.json();
       
-      setCandidates(prevCandidates => prevCandidates.filter(c => c.id !== candidateId)); // Update state lokal
-      // fetchCandidates(); // Alternatif: fetch ulang seluruh data, tapi update lokal lebih cepat
-      
-      console.log('Kandidat berhasil dihapus:', result.message);
-      // setAlert({ show: true, message: result.message, type: 'success' }); // Tampilkan notifikasi sukses jika ada
+      setCandidates(prevCandidates => prevCandidates.filter(c => c.id !== candidateId));
       
     } catch (err) {
-      console.error("Error deleting candidate:", err);
       setError(err.message);
-      // setAlert({ show: true, message: err.message, type: 'error' }); // Tampilkan notifikasi error jika ada
     } finally {
       setLoading(false);
     }
@@ -118,34 +111,15 @@ export default function AdminCandidatesPage() {
     candidate.kabinet?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // AdminLayout tidak lagi diterapkan langsung di return JSX utama
   return (
     <>
       <Head>
         <title>Manajemen Kandidat - Admin Panel</title>
       </Head>
 
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-center">
-        <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">
-            Daftar Kandidat
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Kelola data pasangan calon ketua dan wakil ketua.
-            </p>
-        </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="mt-4 sm:mt-0 flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 text-sm"
-        >
-          <PlusCircle size={18} className="mr-2" />
-          Tambah Kandidat Baru
-        </button>
-      </div>
-
       {error && <Alert message={error} type="error" onClose={() => setError(null)} />}
       
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col sm:flex-row justify-between">
         <input 
             type="text"
             placeholder="Cari kandidat (nama, kabinet)..."
@@ -153,6 +127,14 @@ export default function AdminCandidatesPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
         />
+        <button
+          onClick={() => handleOpenModal()}
+          className="mt-4 sm:mt-0 flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 text-sm"
+        >
+          <PlusCircle size={18} className="mr-2" />
+          Tambah Kandidat Baru
+        </button>
+
       </div>
 
       {loading && !candidates.length ? (
@@ -164,7 +146,7 @@ export default function AdminCandidatesPage() {
                 {searchTerm ? 'Tidak ada kandidat yang cocok.' : 'Belum ada kandidat.'}
             </h3>
             <p className="text-gray-500 dark:text-gray-400 mt-2">
-                {searchTerm ? 'Coba kata kunci lain atau bersihkan pencarian.' : 'Silakan tambahkan kandidat baru untuk memulai.'}
+                {searchTerm ? 'Coba kata kunci lain atau bersihkan pencarian.' : 'Silakan tambahkan kandidat sebelum mulai voting.'}
             </p>
         </div>
       ) : (

@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const { adminLogin, isAdmin, user, loadingAuth } = useAuth();
   const { settings, loadingSettings } = useAppSettings();
-  
+
   const [loading, setLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState({ show: false, message: '', type: '' });
 
@@ -40,24 +40,21 @@ export default function AdminLoginPage() {
     setAlertMessage({ show: false, message: '', type: '' });
     try {
       await adminLogin(formData.email, formData.password);
-      // onAuthStateChange in AuthContext will set isAdmin and user, then useEffect will redirect
-      // No explicit redirect here, relying on AuthContext state change
-      // router.push('/admin'); // This might be too soon if state update is not immediate
+      router.push('/admin');
     } catch (error) {
-      console.error("Admin login error:", error);
       setAlertMessage({ show: true, message: error.message || 'Login admin gagal. Periksa email dan password Anda.', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
-  
+
   if (loadingAuth || loadingSettings) {
     return <Loading message="Memuat halaman login admin..." />;
   }
   // If already logged in as admin, redirect handled by useEffect. 
   // Can add explicit loading screen here too if preferred.
   if (isAdmin && user) {
-      return <Loading message="Mengalihkan ke dashboard admin..." />;
+    return <Loading message="Mengalihkan ke dashboard admin..." />;
   }
 
 
@@ -69,23 +66,20 @@ export default function AdminLoginPage() {
       </Head>
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700 py-12 px-4 sm:px-6 lg:px-8 relative">
         <div className="absolute top-6 left-6 flex items-center opacity-80">
-          <Image 
-              src={settings.header_logo1_url || '/logo.png'} 
-              alt="Logo Universitas" 
-              width={50} height={50} className="rounded-md object-contain"
-              onError={(e) => e.target.src = 'https://placehold.co/50x50/FFFFFF/333333?text=L1'}
+          <Image
+            src={settings.header_logo1_url || '/logo.png'}
+            alt="Logo Universitas"
+            width={50} height={50} className="rounded-md object-contain"
+            onError={(e) => e.target.src = 'https://placehold.co/50x50/FFFFFF/333333?text=L1'}
           />
         </div>
 
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden p-8 space-y-8">
           <div className="text-center">
-            <Shield className="mx-auto h-12 w-12 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="mt-4 text-3xl font-extrabold text-gray-900 dark:text-gray-100">
-              Admin Panel Login
+            <Image src="/hmik.jpeg" alt="Logo HMI MK" width={80} height={80} className="mx-auto rounded-md object-contain" />
+            <h2 className="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Admin
             </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Akses terbatas untuk administrator sistem.
-            </p>
           </div>
 
           {alertMessage.show && <Alert message={alertMessage.message} type={alertMessage.type} onClose={() => setAlertMessage({ show: false })} />}
@@ -141,13 +135,13 @@ export default function AdminLoginPage() {
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <div className="flex items-center">
-                    <LogIn size={18} className="mr-2"/> Sign In
+                    <LogIn size={18} className="mr-2" /> Sign In
                   </div>
                 )}
               </button>
             </div>
           </form>
-           <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-center text-xs text-gray-500 dark:text-gray-400">
             &copy; {new Date().getFullYear()} {settings.election_title || "Sistem Voting Online"}
           </p>
         </div>

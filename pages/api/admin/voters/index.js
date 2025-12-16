@@ -1,4 +1,4 @@
-import { supabase } from '../../../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../../../lib/supabaseClient';
 import { withAdminAuth } from '../../../../lib/withAdminAuth';
 
 async function handler(req, res) {
@@ -13,28 +13,24 @@ async function handler(req, res) {
       const limitInt = parseInt(limit, 10);
       const offset = (pageInt - 1) * limitInt;
 
-      let query = supabase
+      let query = supabaseAdmin
         .from('users')
         .select('nim, email, program_code, already_vote, last_login, created_at, allowed_programs(program_name)', { count: 'exact' });
 
-      // Apply search filter
       if (search) {
         query = query.or(`nim.ilike.%${search}%,email.ilike.%${search}%`);
       }
 
-      // Apply program filter
       if (program) {
         query = query.eq('program_code', program);
       }
 
-      // Apply voting status filter
       if (status === 'voted') {
         query = query.eq('already_vote', true);
       } else if (status === 'not_voted') {
         query = query.eq('already_vote', false);
       }
       
-      // Apply ordering and pagination
       query = query.order('created_at', { ascending: false }).range(offset, offset + limitInt - 1);
 
       const { data, error, count } = await query;
@@ -49,8 +45,7 @@ async function handler(req, res) {
       });
 
     } catch (error) {
-      console.error('Error fetching voters list:', error);
-      return res.status(500).json({ message: 'Gagal mengambil data pemilih: ' + error.message });
+      return res.status(500).json({ message: 'Gagal mengambil data pemilih.' });
     }
   } else {
     res.setHeader('Allow', ['GET']);

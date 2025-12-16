@@ -159,7 +159,6 @@ export default function CandidateFormModal({ isOpen, onClose, onSave, candidate,
       }, 1500);
       
     } catch (err) {
-      console.error("Form submission error:", err);
       setFormAlert({ show: true, message: err.message, type: 'error' });
     } finally {
       setLoading(false);

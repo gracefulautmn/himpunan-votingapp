@@ -56,7 +56,6 @@ export default function AdminProgramsPage() {
       const data = await response.json();
       setPrograms(data);
     } catch (err) {
-      console.error("Error fetching programs:", err);
       setPageError(err.message);
     } finally {
       setLoading(false);
@@ -122,7 +121,6 @@ export default function AdminProgramsPage() {
       handleCloseModal();
 
     } catch (err) {
-      console.error("Form submission error:", err);
       setFormError(err.message);
     } finally {
       setIsSubmitting(false);
@@ -155,9 +153,7 @@ export default function AdminProgramsPage() {
       alert(result.message);
       await fetchPrograms();
     } catch (err) {
-      console.error("Error deleting program:", err);
-      setPageError(err.message); // Set page error for delete operation
-      // alert(`Error: ${err.message}`); // Alert can be redundant if pageError is shown via Alert component
+      setPageError(err.message);
     }
   };
 
@@ -170,11 +166,8 @@ export default function AdminProgramsPage() {
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-center">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">
-            Program Studi Terdaftar
+            {/* Program Studi Terdaftar */}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Kelola program studi yang diizinkan untuk melakukan voting.
-          </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
