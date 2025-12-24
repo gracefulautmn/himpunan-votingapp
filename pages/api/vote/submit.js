@@ -23,35 +23,42 @@ export default async function handler(req, res) {
     });
 
     if (rpcError) {
-      if (rpcError.message.includes('already voted') || 
-          rpcError.message.includes('duplicate detected')) {
-        return res.status(403).json({ 
+      if (rpcError.message.includes('already voted') ||
+        rpcError.message.includes('duplicate detected')) {
+        return res.status(403).json({
           message: 'Anda sudah memberikan suara sebelumnya.',
           errorCode: 'ALREADY_VOTED'
         });
       }
-      
+
       if (rpcError.message.includes('not found')) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: 'Pengguna atau kandidat tidak ditemukan.',
           errorCode: 'NOT_FOUND'
         });
       }
-      
-      return res.status(500).json({ 
+
+      return res.status(500).json({
         message: 'Gagal mencatat suara. Silakan coba lagi.',
         errorCode: 'VOTE_FAILED'
       });
     }
 
-    return res.status(200).json({ 
+    // Broadcast ke channel untuk trigger realtime update di stats page
+    await supabaseAdmin.channel('vote-updates').send({
+      type: 'broadcast',
+      event: 'new-vote',
+      payload: { candidateId: parsedCandidateId, timestamp: new Date().toISOString() }
+    });
+
+    return res.status(200).json({
       message: 'Suara Anda berhasil dicatat. Terima kasih atas partisipasi Anda!',
       action: 'auto_logout',
       delay: 10000
     });
 
   } catch (error) {
-    return res.status(500).json({ 
+    return res.status(500).json({
       message: 'Terjadi kesalahan pada server. Silakan coba lagi.',
       errorCode: 'SERVER_ERROR'
     });
